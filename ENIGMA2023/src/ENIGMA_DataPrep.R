@@ -1,8 +1,7 @@
-
-## Copyright © 2023 Lene J. Kjær, Michael P. Ward, Anette E. Boklund, Lars E. Larsen, Charlotte K. Hjulsager, and Carsten T. Kirkeby ”
+## Copyright © 2023 Lene J. Kjær, Michael P. Ward, Anette E. Boklund, Lars E. Larsen, Charlotte K. Hjulsager, and Carsten T. Kirkeby 
 
 ##############################################################################################
-# This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.   
+# This file is part of the Shiny app for the ENIGMA HPAI model 1.0.   
 
 # The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.                                   
 
@@ -21,11 +20,11 @@ europeanCountries$area_sqkm <- as.numeric(st_area(europeanCountries)) / 1000000
 
 ### READ IN newest OIE DATA ###
 ##link to where files are - the below code will pick the newest file in the folder
-# tt <- tempfile()
-# download.file("http://www.costmodds.org/ENIGMA2023/for_ai.car", tt, mode="wb")
-# qs::qload(tt)
- updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
-# file.remove(tt)
+#tt <- tempfile()
+#download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
+#qs::qload(tt)
+updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
+#file.remove(tt)
 
 # the code above downloaded the data set called ai_data, here we select only HPAI and only select some of the variables in the WOAH-WAHIS data, as we do not need them all
 europe_data <-ai_data %>% 
@@ -95,7 +94,7 @@ colnames(europe_data_weekly)<- c("ADM0_A3", "Week", "Year","no_outbreaks")
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
   group_by(ADM0_A3) %>%
-  complete(Year = 2016:2023, fill = list(Week=1, no_outbreaks = 0))
+  complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0))
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%

@@ -3,9 +3,9 @@
 
 ##############################################################################################
 # This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.   
-                                                                                            
+
 # The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.                                   
-                                                                                            
+
 # The ENIGMA HPAI model is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.                                                
 
 # You should have received a copy of the GNU General Public License along with the ENIGMA HPAI model. If not, see <https://www.gnu.org/licenses/>.
@@ -23,9 +23,12 @@ library(tsibble)
 library(ggplot2)
 library(ggpubr)
 library(grid)
+library(gridExtra)
 library(spdep)
 library(fanplot)
 library(qs)
+library(countrycode)
+library(DT)
 
 ### READ IN newest OIE DATA ###
 ##link to where files are - the below code will pick the newest file in the folder
@@ -52,18 +55,18 @@ makeFootnote <- function(footnoteText=
 
 ## SHINY APP ##
 shinyApp(
-   ui <- fluidPage(
-     # for Carstens tracker
+  ui <- fluidPage(
+    # for Carstens tracker
     tags$head(includeHTML("head.html"),includeHTML("head_ljkjaer.html")),
     # Title and logo
     titlePanel(title=div(img(src="ku_logo_uk_v.png",height = 100, width = 80),"ENIGMA HPAI model version 1.0"), windowTitle = "ENIGMA HPAI model"),
-       # Sidebar layout with input and output definitions ----
+    # Sidebar layout with input and output definitions ----
     sidebarLayout(
       
       # Sidebar panel for inputs ----
       sidebarPanel(
         #data range input
-          dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
+        dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
                        min=as.Date(mindate), max=as.Date(maxdate),
                        start = "2021-09-27",
                        end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
@@ -95,7 +98,7 @@ shinyApp(
         h5(HTML("<i>Disclaimer: The model and data reflects the state of knowledge available on the date of dispatch. The University of Copenhagen and DKVET cannot be held liable for any errors, inaccuracies or inconsistencies with regard to text and/or data contained therein. Therefore, the University of Copenhagen and DKVET accept no responsibility or liability arising out of, or in connection with the information provided.</i>")),
         HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),
         strong(a("Contact Admin", 
-          href="mailto:ckir@sund.ku.dk")),
+                 href="mailto:ckir@sund.ku.dk")),
         br(),
         br(),
         p(strong(em(paste0("WOAH-WAHIS data and model updated: ", updateDate)))),
@@ -129,9 +132,9 @@ shinyApp(
                           background-color: #800000; width: 100%; color:white;font-size:85%;"),
                      h5(HTML("<b>Disclaimer and caption</b>"), style="text-align:left;background-color: #ffffff;width: 50%;font-size:85%;"),
                      p(HTML("Any person accessing and/or using this SharePoint Communication Website is allowed to extract data to the extent that the following caption is displayed: <i>“World Organisation for Animal Health (WOAH) (YEAR). – [NAME OF Periodical data extractions WEBPAGE]. Retrieved on [DATE] from [LINK WEBPAGE]. Data extracted by [NAME/ORGANISATION]. WOAH bears no responsibility for the integrity or accuracy of the data contained herein, but not limited to, any deletion, manipulation, or reformatting of data that may have occurred beyond its control. For some events, incorrect data have recently been detected in the figures containing the quantitative information of the outbreaks. WOAH is currently undertaking considerable efforts to solve these issues at the source and provide a dataset that is fully consistent with that reported by countries. The remaining fields of the table are not impacted by these issues. We will keep our users informed as the situation develops.”</i>"),style="text-align:justify;background-color: #ffffff;width: 100%;font-size:85%;"))
-             
-                   ),
-          tabPanel("Model output", downloadButton("downloadPlot", "Download"),plotOutput("graph",height = 500, width = 900), textOutput("info"))
+                   
+          ),
+          tabPanel("Model output", downloadButton("downloadPlot", "Download"),plotOutput("graph",height = 500, width = 900), textOutput("info"), DTOutput("table"))
         )
       )
     )
@@ -142,7 +145,7 @@ shinyApp(
   server <- function(input, output) {
     ## REACTIVE FUNCTIONS ##
     # reactive functions take user inputs fx. date or graph type and produce outputs or variables based on this
-
+    
     # many of the below functions just create timevariables out of the dates chosen. These variables are used for plotting
     startWeek <- reactive({
       startweekno<- isoweek(input$dateRange[1])
@@ -259,26 +262,46 @@ shinyApp(
         geom_sf(data= europe_mapData(),aes(fill = outbreaksArea),color="black")+
         theme_void()+
         scale_fill_gradientn(colours=hcl.colors(10, "Reds",rev=T)) +
-          theme(legend.position = c(0.95, 0.99),
+        theme(legend.position = c(0.95, 0.99),
               legend.justification=c(0.5, 1),legend.title=element_text(size=9),plot.margin=unit(c(1,1,1,-0.5), "cm"))+
         labs(fill=expression(paste("HPAI/10,000 km"^"2")))
       
       print(ggarrange(myMap1,myMap2, ncol=2))
       recordPlot()
     })
-
+    #here we create table to accompany map
+    hpai_table <- reactive({
+      myTable<- data.frame(keyName=names(colSums(observed(final_model$stsObj)[start():end(),])), value=colSums(observed(final_model$stsObj)[start():end(),]), row.names=NULL) %>% 
+        mutate(Country=countrycode(keyName,"iso3c","country.name")) %>% 
+        select(Country, value) %>% 
+        arrange(desc(value)) %>% 
+        rename("#HPAI detections"="value") %>% 
+        datatable(extensions = c('Buttons'),
+                  options = list(
+                    dom = 'frtBip',
+                    buttons = list(list(extend = "csv", text = "Download csv", filename = paste0('HPAIdetections_',strftime(input$dateRange[1], format='%d/%m/%Y'), '_to_', strftime(input$dateRange[2], format='%d/%m/%Y')),
+                                        exportOptions = list(
+                                          modifier = list(page = "all"))))))
+      
+      
+      
+      return(myTable)
+      
+    })
+    
+    
     # time series
     hpai_timeseries <- reactive({
       par(mar = c(7, 5, 4.1, 2.1))
-        myPlot <- plot(AI_sts[start():end(),], type = observed ~ time, ylab="No. detected cases", xlab="Years and quarters", ylim=c(0,max(rowSums(observed(AI_sts[start():end(),]),na.rm=T))+100))
-        print(myPlot)
+      myPlot <- plot(AI_sts[start():end(),], type = observed ~ time, ylab="No. detected cases", xlab="Years and quarters", ylim=c(0,max(rowSums(observed(AI_sts[start():end(),]),na.rm=T))+100))
+      print(myPlot)
       recordPlot()
     })
     
     # model fit, summed all countries  
     allCountry_modelfit<- reactive({
-        myPlot <-plot(final_model, type = "fitted", total = TRUE,hide0s = TRUE, ylab="No. detected cases", xlab="Years and quarters",ylim=c(0,(max(rowSums(observed(final_model$stsObj[start():end(), ]), na.rm=T)))+50),par.settings = list(mar = c(7, 5, 4.1, 2.1)), xaxis=list(epochsAsDate=TRUE),start=c(startYear(),startWeek()), end=c(endYear(),endWeek()+0.1),col=c('brown2','#4292C6','orange'),names="Summed all countries", legend.args=list(x="topright", inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')))
-        print(myPlot)
+      myPlot <-plot(final_model, type = "fitted", total = TRUE,hide0s = TRUE, ylab="No. detected cases", xlab="Years and quarters",ylim=c(0,(max(rowSums(observed(final_model$stsObj[start():end(), ]), na.rm=T)))+50),par.settings = list(mar = c(7, 5, 4.1, 2.1)), xaxis=list(epochsAsDate=TRUE),start=c(startYear(),startWeek()), end=c(endYear(),endWeek()+0.1),col=c('brown2','#4292C6','orange'),names="Summed all countries", legend.args=list(x="topright", inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')))
+      print(myPlot)
       recordPlot()
     })
     
@@ -286,31 +309,31 @@ shinyApp(
     country_modelfit <- reactive({
       unit<-  which(districts2plot2==input$predictions_options) 
       myPlot <-plot(final_model, type = "fitted", units = districts2plot[unit], hide0s = TRUE,  names=districts2plot2[unit],ylab="No. deteced cases",xlab="Years and quarters",ylim=c(0,(max(observed(final_model$stsObj)[start():end(),districts2plot[unit]], na.rm=T))+7),xaxis=list(epochsAsDate=TRUE),par.settings = list(mar = c(7, 5, 4.1, 2.1)),  start=c(startYear(),startWeek()), end=c(endYear(),endWeek()+0.1),legend.args=list(x="topright",inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')),col=c('brown2','#4292C6','orange'))
-        print(myPlot)
-        recordPlot()
+      print(myPlot)
+      recordPlot()
     })
     # forecasting, summed all countries  
     AllCountry_forecasting <- reactive({
-          myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim())*0.7,fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
-        title(xlab="Time", line=1)
-        title(ylab="No. of detected/predicted cases", line=3)
-        grid()
-        print(myPlot)
+      myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim())*0.7,fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
+      title(xlab="Time", line=1)
+      title(ylab="No. of detected/predicted cases", line=3)
+      grid()
+      print(myPlot)
       recordPlot()
     })
     
     # forecasting, individual countries  
     country_forecasting <- reactive({
       unit<-  which(districts2plot2==input$forecasting_options) 
-        myPlot <-plot(sim()[,districts2plot[unit],],  observed=FALSE,ylab="", xlab="",main=districts2plot2[unit], type="fan", ylim=c(0, quantile(sim()[,districts2plot[unit],], 0.99)),means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
+      myPlot <-plot(sim()[,districts2plot[unit],],  observed=FALSE,ylab="", xlab="",main=districts2plot2[unit], type="fan", ylim=c(0, quantile(sim()[,districts2plot[unit],], 0.99)),means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
       title(xlab="Time", line=1)
       title(ylab="No. of detected/predicted cases", line=3)
       grid()
-        print(myPlot)
-        recordPlot()
+      print(myPlot)
+      recordPlot()
     })
     
-   
+    
     #functions to get plot names dependent on user input - this will be used when downloading files to create file name
     getPlotName <- reactive({
       if(input$graph=="country_modelfit"){
@@ -323,25 +346,25 @@ shinyApp(
     })
     ## RENDER PLOT ###
     # this creates the actual graphs/maps on the output tab using the respective reactive functions for these graphs/maps
-        output$graph <- renderPlot({
+    output$graph <- renderPlot({
       if(input$graph=="hpai_map"){
         replayPlot(req(hpai_map()))
       }
       if(input$graph=="hpai_timeseries") {replayPlot(req(hpai_timeseries()))}
       if(input$graph=="country_modelfit"){
         if(input$predictions_options== "Summed all countries"){replayPlot(req(allCountry_modelfit()))
-          } else {replayPlot(req(country_modelfit()))}
+        } else {replayPlot(req(country_modelfit()))}
       }
       if(input$graph=="forecasting"){
         if(input$forecasting_options== "Summed all countries"){replayPlot(req(AllCountry_forecasting()))
-          }else{replayPlot(req(country_forecasting()))}
+        }else{replayPlot(req(country_forecasting()))}
       }
     })
     ## RENDER TEXT ##
     # here we create figure text for each graph/map
     output$info <- renderText({
       if(input$graph=="hpai_map"){
-        paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections between ",strftime(input$dateRange[1], format='%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries shown geographically as total number of detections (left) and number of detections per 10,000 km² (right).")
+        paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections between ",strftime(input$dateRange[1], format='%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries shown geographically as total number of detections (left) and number of detections per 10,000 km² (right). Below is a table of the total number of detections per country ordered from highest to lowest.")
       } else
         if(input$graph=="hpai_timeseries") {
           paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections shown over time between ",strftime(input$dateRange[1], format= '%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries.")
@@ -364,6 +387,12 @@ shinyApp(
               }
             }
     })
+    #CREATE TABLE ON THE MAP PAGE ONLY
+    output$table <- renderDT(server=FALSE,{
+      if(input$graph=="hpai_map"){
+        hpai_table()
+      }
+    })
     
     ## DOWNLOAD GRAPHS/MAPS ###
     output$downloadPlot <- downloadHandler(
@@ -375,13 +404,13 @@ shinyApp(
           paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_", input$predictions_options,"_", Sys.Date(),".png")
         } else{paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_",  Sys.Date(),".png")}},
       content = function(file) {
-          png(file,width = 13, height = 8, units = 'in', res = 300)
-          replayPlot(eval(parse(text = getPlotName())))
-          makeFootnote(paste0("ENIGMA model results based on model from Kjær et al. (2023), using WOAH-WAHIS data from ", strftime(input$dateRange[1],format='%d/%m/%Y')," to ",strftime(input$dateRange[2],format='%d/%m/%Y'), ". Downloaded on ", format(Sys.time(), "%d/%m/%Y")))
-          dev.off()
+        png(file,width = 13, height = 8, units = 'in', res = 300)
+        replayPlot(eval(parse(text = getPlotName())))
+        makeFootnote(paste0("ENIGMA model results based on model from Kjær et al. (2023), using WOAH-WAHIS data from ", strftime(input$dateRange[1],format='%d/%m/%Y')," to ",strftime(input$dateRange[2],format='%d/%m/%Y'), ". Downloaded on ", format(Sys.time(), "%d/%m/%Y")))
+        dev.off()
       }
       
-      )
+    )
   }
   
 )

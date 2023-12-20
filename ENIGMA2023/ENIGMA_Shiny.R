@@ -74,18 +74,18 @@ shinyApp(
         radioButtons("graph", "Select:",
                      c("Map of detections"="hpai_map",
                        "Timeseries" = "hpai_timeseries",
-                       "Model fit" = "country_predictions",
-                       "Forecasting" = "simulation"),selected="hpai_timeseries"),
+                       "Model fit" = "country_modelfit",
+                       "Forecasting" = "forecasting"),selected="hpai_timeseries"),
         
         #if predictions are chose, here you select country
         conditionalPanel(
-          condition = "input.graph == 'country_predictions'",
+          condition = "input.graph == 'country_modelfit'",
           selectInput("predictions_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Denmark"))
         ),
         
         # if forecasting is chosen, here you pick country
         conditionalPanel(
-          condition = "input.graph == 'simulation'",
+          condition = "input.graph == 'forecasting'",
           selectInput("forecasting_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Denmark"))
         ),
         #text under the panel
@@ -105,7 +105,7 @@ shinyApp(
         br(),
         div(img(src="gplv3-with-text-136x68.png",height = 40, width = 80),
             br(),
-            span("The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. The ENIGMA HPAI model is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See ",style = "font-size:80%;"), span(a("the GNU General Public License", href="https://www.gnu.org/licenses/",target="_blank",style = "font-size:80%;")), span(" for more details.",style = "font-size:80%;"))
+            span("The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. The ENIGMA HPAI model is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See ",style = "font-size:80%;"), span(a("the GNU General Public License", href="https://www.gnu.org/licenses/gpl-3.0.html",target="_blank",style = "font-size:80%;")), span(" for more details.",style = "font-size:80%;"))
       ),
       # Main panel for displaying outputs ----
       mainPanel(
@@ -276,21 +276,21 @@ shinyApp(
     })
     
     # model fit, summed all countries  
-    allCountry_predictions<- reactive({
-        myPlot <-plot(final_model, type = "fitted", total = TRUE,hide0s = TRUE, ylab="No. detected cases", xlab="Years and quarters",ylim=c(0,(max(rowSums(observed(final_model$stsObj[start():end(), ]), na.rm=T)))+50),par.settings = list(mar = c(7, 5, 4.1, 2.1)), xaxis=list(epochsAsDate=TRUE),start=c(startYear(),startWeek()), end=c(endYear(),endWeek()),col=c('brown2','#4292C6','orange'),names="Summed all countries", legend.args=list(x="topright", inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')))
+    allCountry_modelfit<- reactive({
+        myPlot <-plot(final_model, type = "fitted", total = TRUE,hide0s = TRUE, ylab="No. detected cases", xlab="Years and quarters",ylim=c(0,(max(rowSums(observed(final_model$stsObj[start():end(), ]), na.rm=T)))+50),par.settings = list(mar = c(7, 5, 4.1, 2.1)), xaxis=list(epochsAsDate=TRUE),start=c(startYear(),startWeek()), end=c(endYear(),endWeek()+0.1),col=c('brown2','#4292C6','orange'),names="Summed all countries", legend.args=list(x="topright", inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')))
         print(myPlot)
       recordPlot()
     })
     
     # model fit, individual countries  
-    country_predictions <- reactive({
+    country_modelfit <- reactive({
       unit<-  which(districts2plot2==input$predictions_options) 
-      myPlot <-plot(final_model, type = "fitted", units = districts2plot[unit], hide0s = TRUE,  names=districts2plot2[unit],ylab="No. deteced cases",xlab="Years and quarters",ylim=c(0,(max(observed(final_model$stsObj)[start():end(),districts2plot[unit]], na.rm=T))+7),xaxis=list(epochsAsDate=TRUE),par.settings = list(mar = c(7, 5, 4.1, 2.1)),  start=c(startYear(),startWeek()), end=c(endYear(),endWeek()),legend.args=list(x="topright",inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')),col=c('brown2','#4292C6','orange'))
+      myPlot <-plot(final_model, type = "fitted", units = districts2plot[unit], hide0s = TRUE,  names=districts2plot2[unit],ylab="No. deteced cases",xlab="Years and quarters",ylim=c(0,(max(observed(final_model$stsObj)[start():end(),districts2plot[unit]], na.rm=T))+7),xaxis=list(epochsAsDate=TRUE),par.settings = list(mar = c(7, 5, 4.1, 2.1)),  start=c(startYear(),startWeek()), end=c(endYear(),endWeek()+0.1),legend.args=list(x="topright",inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')),col=c('brown2','#4292C6','orange'))
         print(myPlot)
         recordPlot()
     })
     # forecasting, summed all countries  
-    AllCountry_simulation <- reactive({
+    AllCountry_forecasting <- reactive({
           myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim())*0.7,fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
         title(xlab="Time", line=1)
         title(ylab="No. of detected/predicted cases", line=3)
@@ -300,7 +300,7 @@ shinyApp(
     })
     
     # forecasting, individual countries  
-    country_simulations <- reactive({
+    country_forecasting <- reactive({
       unit<-  which(districts2plot2==input$forecasting_options) 
         myPlot <-plot(sim()[,districts2plot[unit],],  observed=FALSE,ylab="", xlab="",main=districts2plot2[unit], type="fan", ylim=c(0, quantile(sim()[,districts2plot[unit],], 0.99)),means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
       title(xlab="Time", line=1)
@@ -313,11 +313,11 @@ shinyApp(
    
     #functions to get plot names dependent on user input - this will be used when downloading files to create file name
     getPlotName <- reactive({
-      if(input$graph=="country_predictions"){
-        if(input$predictions_options== "Summed all countries"){filename<- "allCountry_predictions()"} else {filename <- "country_predictions()"}
+      if(input$graph=="country_modelfit"){
+        if(input$predictions_options== "Summed all countries"){filename<- "allCountry_modelfit()"} else {filename <- "country_modelfit()"}
       }else
-        if(input$graph=="simulation"){
-          if(input$forecasting_options== "Summed all countries"){filename <-"AllCountry_simulation()"}else{filename <- "country_simulations()"}
+        if(input$graph=="forecasting"){
+          if(input$forecasting_options== "Summed all countries"){filename <-"AllCountry_forecasting()"}else{filename <- "country_forecasting()"}
         }else{filename <- paste0(input$graph,"()") }
       return(filename)
     })
@@ -328,13 +328,13 @@ shinyApp(
         replayPlot(req(hpai_map()))
       }
       if(input$graph=="hpai_timeseries") {replayPlot(req(hpai_timeseries()))}
-      if(input$graph=="country_predictions"){
-        if(input$predictions_options== "Summed all countries"){replayPlot(req(allCountry_predictions()))
-          } else {replayPlot(req(country_predictions()))}
+      if(input$graph=="country_modelfit"){
+        if(input$predictions_options== "Summed all countries"){replayPlot(req(allCountry_modelfit()))
+          } else {replayPlot(req(country_modelfit()))}
       }
-      if(input$graph=="simulation"){
-        if(input$forecasting_options== "Summed all countries"){replayPlot(req(AllCountry_simulation()))
-          }else{replayPlot(req(country_simulations()))}
+      if(input$graph=="forecasting"){
+        if(input$forecasting_options== "Summed all countries"){replayPlot(req(AllCountry_forecasting()))
+          }else{replayPlot(req(country_forecasting()))}
       }
     })
     ## RENDER TEXT ##
@@ -347,7 +347,7 @@ shinyApp(
           paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections shown over time between ",strftime(input$dateRange[1], format= '%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries.")
           
         } else
-          if(input$graph=="country_predictions"){
+          if(input$graph=="country_modelfit"){
             if(input$predictions_options== "Summed all countries"){
               paste0("Overall model fit aggregated over all the 37 countries shown for ", strftime(input$dateRange[1], format= '%d/%m/%Y'), " to ", strftime(input$dateRange[2],format='%d/%m/%Y'),". The plot shows the relative contribution of model components based on the final multivariate time-series model in Kjær et al. (2023). Dots show the actual counts of reported highly pathogenic avian influenza (H5 subtype) detections in domestic and wild birds. Note that zero/missing detections have been omitted.")
             } else {
@@ -355,7 +355,7 @@ shinyApp(
               paste0("Model fit for ", districts2plot2[unit]," shown for ", strftime(input$dateRange[1], format='%d/%m/%Y'), " to ", strftime(input$dateRange[2],format='%d/%m/%Y'), ". The plot shows the relative contribution of model components based on the final multivariate time-series model in Kjær et al. (2023). Dots show the actual counts of reported highly pathogenic avian influenza (H5 subtype) detections in domestic and wild birds. Note that zero/missing detections have been omitted.")
             }
           } else 
-            if(input$graph=="simulation"){
+            if(input$graph=="forecasting"){
               if(input$forecasting_options== "Summed all countries") {
                 paste0("Simulation-based 4 week forecast using the multivariate time-series model in Kjær et al. (2023). The plots show weekly number of predicted highly pathogenic avian influenza (H5 subtype) detections aggregated over all 37 countries included in the model. The fan chart represents the 10%, 50% and 90% quantiles of the simulations (N=500) each week; their mean is displayed as a white line. The black dot to the left of the graph depicts the number of detections from week ", isoweek(input$dateRange[2])-1, " in ", isoyear(input$dateRange[2]), ". As forecasting consists of sequential calls to the negative binomial distributions developed in the model, the mean at each time point is determined by using the parameter estimates and the counts simulated at the previous time point. Thus, we used the second to last week of data (to account for delays in WOAH-WAHIS reporting) to forecast 4 weeks ahead. For further details, see Kjær et al. (2023).")
               }else{
@@ -369,9 +369,9 @@ shinyApp(
     output$downloadPlot <- downloadHandler(
       
       filename = function() { 
-        if(input$graph=="simulation" & input$forecasting_options!= "Summed all countries"){
+        if(input$graph=="forecasting" & input$forecasting_options!= "Summed all countries"){
           paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_", input$forecasting_options,"_", Sys.Date(),".png")
-        }else if (input$graph=="country_predictions" & input$predictions_options!= "Summed all countries"){
+        }else if (input$graph=="country_modelfit" & input$predictions_options!= "Summed all countries"){
           paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_", input$predictions_options,"_", Sys.Date(),".png")
         } else{paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_",  Sys.Date(),".png")}},
       content = function(file) {

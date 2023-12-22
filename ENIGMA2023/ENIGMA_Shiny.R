@@ -238,6 +238,15 @@ shinyApp(
       t1$outbreaksArea <- t1$no_outbreaks/(t1$area_sqkm/10000)
       return(st_as_sf(t1))
     })
+    europe_data_sf <-reactive({
+      ##to use in shiny graphs
+      europe_data_sf <- europe_data %>% 
+        filter(yearweek>=startYearWeek() & yearweek <=endYearWeek()) %>% 
+        mutate(Longitude=as.numeric(Longitude), Latitude=as.numeric(Latitude) ) %>% 
+        filter(Latitude <74.0) %>% 
+        st_as_sf(coords=c("Longitude","Latitude"),crs="EPSG:4326")
+      return(europe_data_sf)
+    })
     ## simulations 3 weeks ahead of the last week of the time period chosen. 
     sim <- reactive({
       startSim <-end()-1
@@ -266,7 +275,12 @@ shinyApp(
               legend.justification=c(0.5, 1),legend.title=element_text(size=9),plot.margin=unit(c(1,1,1,-0.5), "cm"))+
         labs(fill=expression(paste("HPAI/10,000 km"^"2")))
       
-      print(ggarrange(myMap1,myMap2, ncol=2))
+      myMap3 <- ggplot(europe_mapData())+
+        geom_sf(fill="seashell")+
+        geom_sf(europe_data_sf(),col="darkred", size=0.5)+
+        theme_void()
+      
+      print(ggarrange(myMap1,myMap2,myMap3, ncol=3))
       recordPlot()
     })
     #here we create table to accompany map
@@ -282,8 +296,6 @@ shinyApp(
                     buttons = list(list(extend = "csv", text = "Download csv", filename = paste0('HPAIdetections_',strftime(input$dateRange[1], format='%d/%m/%Y'), '_to_', strftime(input$dateRange[2], format='%d/%m/%Y')),
                                         exportOptions = list(
                                           modifier = list(page = "all"))))))
-      
-      
       
       return(myTable)
       

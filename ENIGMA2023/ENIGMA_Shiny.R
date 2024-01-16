@@ -29,6 +29,7 @@ library(fanplot)
 library(qs)
 library(countrycode)
 library(DT)
+library(lubridate)
 
 ### READ IN newest OIE DATA ###
 ##link to where files are - the below code will pick the newest file in the folder
@@ -37,6 +38,8 @@ download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
 qs::qload(tt)
 updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
 file.remove(tt)
+
+
 
 ## FUNCTION TO MAKE FOOTNOTES IN DOWNLOADED PLOTS FROM SHINY ##
 makeFootnote <- function(footnoteText=
@@ -74,7 +77,7 @@ shinyApp(
         
         
         # buttons to picks which graphs/maps to see
-        radioButtons("graph", "Select:",
+        radioButtons("graph","Select:",
                      c("Map of detections"="hpai_map",
                        "Timeseries" = "hpai_timeseries",
                        "Model fit" = "country_modelfit",
@@ -103,8 +106,9 @@ shinyApp(
         br(),
         p(strong(em(paste0("WOAH-WAHIS data and model updated: ", updateDate)))),
         br(),
-        br(),
         p("Copyright © 2023 Lene J. Kjær, Michael P. Ward, Anette E. Boklund, Lars E. Larsen, Charlotte K. Hjulsager, and Carsten T. Kirkeby",style = "font-size:80%;"),
+        br(),
+        p("THE SOFTWARE IS PROVIDED AS IS AND, TO THE MAXIMUM EXTENT PERMITTED UNDER APPLICABLE LAW, WE PROVIDE NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, BY STATUTE OR OTHERWISE, INCLUDING BUT NOT LIMITED TO ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, OR NON-INFRINGMENT. WE DO NOT WARRANT THAT THE SOFTWARE WILL FUNCTION UNINTERRUPTED, THAT IT WILL MEET ANY REGULATORY REQUIREMENTS, THAT IT IS ERROR-FREE, OR THAT ANY ERRORS WILL BE CORRECTED.",style = "font-size:80%;"),
         br(),
         div(img(src="gplv3-with-text-136x68.png",height = 40, width = 80),
             br(),
@@ -118,7 +122,7 @@ shinyApp(
           tabPanel("Model description",
                    
                    h3("Endemic-epidemic modelling of highly pathogenic avian influenza in Europe"),
-                   p("The ENIGMA HPAI model results and graphs presented in this shiny app are based on the 2021-2022 model described in Kjær et al. (2023). In this study, we utilized readily available data from the World Organization for Animal Health (WOAH-WAHIS)* on highly pathogenic avian influenza (HPAI) H5 detections in wild and domestic birds together with a time-series modelling framework (Meyer et al. 2014) to predict HPAI H5 detections within Europe. This framework decomposes time series data into endemic and epidemic components, where the epidemic component can take into account within-country transmission and between-country transmission as well as short-distance (from directly neighouring countries) and long-distance (transmission follows a distance-decay algorithm) transmission."),
+                   p("The ENIGMA HPAI model results and graphs presented in this shiny app are based on the 2021-2022 model described in Kjær et al. (2023). In this study, we utilized readily available data from the World Organization for Animal Health (WOAH-WAHIS)* on highly pathogenic avian influenza (HPAI) H5 detections in wild and domestic birds together with a time-series modelling framework (Meyer et al. 2014) to predict HPAI H5 detections within Europe. This framework decomposes time series data into endemic and epidemic components, where the epidemic component can take into account within-country transmission and between-country transmission as well as short-distance (from directly neighbouring countries) and long-distance (transmission follows a distance-decay algorithm) transmission."),
                    p("Looking at the WOAH-WAHIS data, we noticed a shift in the seasonality between 2016-late 2021, and late 2021-now, with outbreaks during the summer periods in recent years. Thus, we created different models for these time periods, and the results presented here are from the model fitted to more recent data. Therefore, the earliest date of data in this model is from late 2021. This model includes long-range transmission, and seasonality in the epidemic component, but assumes a constant contribution from endemic transmission within each country. The original model suggests that 12.2% of HPAI detections are endemic in nature, with 87.8% being epidemic in nature (73.3% within-country and 14.5% between-country transmission). This may change as more data on detections are added"),
                    p("Due to the model being based on more recent HPAI H5 detection data, the earliest date that can be chosen in this app is Monday in week 39, 2021 and the latest date that can be chosen is the last date, from which we have HPAI H5 data from WOAH-WAHIS (updated weekly). Forecasting will always be 4 weeks ahead from the week before the last date chosen (to account for delays in WOAH-WAHIS reporting). For more details see Kjær et al. (2023) and Meyer et al. (2014)."),
                    br(),
@@ -276,8 +280,8 @@ shinyApp(
         labs(fill=expression(paste("HPAI/10,000 km"^"2")))
       
       myMap3 <- ggplot(europe_mapData())+
-        geom_sf(fill="seashell")+
-        geom_sf(europe_data_sf(),col="darkred", size=0.5)+
+        geom_sf(fill="seashell", show.legend=FALSE)+
+        geom_sf(europe_data_sf(),mapping=aes(fill="darkred",alpha=0.5),col="darkred", alpha=0.5,size=0.3,show.legend=FALSE)+
         theme_void()
       
       print(ggarrange(myMap1,myMap2,myMap3, ncol=3))
@@ -326,7 +330,7 @@ shinyApp(
     })
     # forecasting, summed all countries  
     AllCountry_forecasting <- reactive({
-      myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim())*0.7,fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
+      myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim()*0.9),fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
       title(xlab="Time", line=1)
       title(ylab="No. of detected/predicted cases", line=3)
       grid()
@@ -376,7 +380,7 @@ shinyApp(
     # here we create figure text for each graph/map
     output$info <- renderText({
       if(input$graph=="hpai_map"){
-        paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections between ",strftime(input$dateRange[1], format='%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries shown geographically as total number of detections (left) and number of detections per 10,000 km² (right). Below is a table of the total number of detections per country ordered from highest to lowest.")
+        paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections between ",strftime(input$dateRange[1], format='%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", in 37 European countries shown geographically as total number of detections (left), number of detections per 10,000 km² (middle), and as individual detection locations (right). Below is a table of the total number of detections per country ordered from highest to lowest.")
       } else
         if(input$graph=="hpai_timeseries") {
           paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections shown over time between ",strftime(input$dateRange[1], format= '%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries.")

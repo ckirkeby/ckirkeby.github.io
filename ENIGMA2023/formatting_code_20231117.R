@@ -30,8 +30,9 @@ library(qs)
 ####### 1) Download seneste infur fil til denne folder: ############
 
 #setwd("C:/ENIGMAdata/")
+# setwd("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/")
 #setwd("C:/Users/zxd598/Documents/GitHub/ku-awdc.github.io/ENIGMA2023/")
-setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/")
+ setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/")
 # Find the file:
 ff <- list.files(pattern="infur")
 # Define filename:
@@ -61,6 +62,9 @@ endDataWeek <-as.numeric(strftime(endDate, format = '%V'))
 endDataYear <-as.numeric(strftime(endDate, format = '%Y'))
 europe_data_weekly$week <- paste0('W', europe_data_weekly$Week)
 europe_data_weekly$yearweek <- yearweek(paste0(europe_data_weekly$Year, ' ', europe_data_weekly$week))
+
+europe_data$week <- paste0('W', europe_data$isoweek)
+europe_data$yearweek <- yearweek(paste0(europe_data$isoyear, ' ', europe_data$week))
 
 #subset data and covariates - to start in week 39 of 2021
 subset_start <- 299
@@ -112,12 +116,14 @@ final_model <-hhh4(stsObj = AI_sts,control = final_model_base)
 save_date <- Sys.Date()
 # Save the data in an (arbitrarily names file format) ".car"  format:
 # We set the wd temporarily to tmp, to save a ".car" file:
-setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/tmp")
+# setwd("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/tmp")
+ setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/tmp")
 qs::qsave(list(ai_data=ai_data, 
                save_date=save_date, 
                filename=filename,
                endDate=endDate,
                updateDate=updateDate,
+               europe_data=europe_data,
                europe_data_weekly=europe_data_weekly,
                AI_weekly=AI_weekly,
                AI_weekly1=AI_weekly1,
@@ -134,6 +140,8 @@ qs::qsave(list(ai_data=ai_data,
                final_model=final_model), 
           file="for_ai.car", preset="archive")
 file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
+# file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
+
 # Clean up:
 rm(ai_data)
 

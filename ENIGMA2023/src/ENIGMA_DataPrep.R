@@ -28,8 +28,8 @@ updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format
 
 # the code above downloaded the data set called ai_data, here we select only HPAI and only select some of the variables in the WOAH-WAHIS data, as we do not need them all
 europe_data <-ai_data %>% 
-  filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)")) %>% 
-  select(disease_eng,iso_code, sero_sub_genotype_eng,Outbreak_start_date,Species,cases, Longitude, Latitude )
+  dplyr::filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)")) %>% 
+  dplyr::select(disease_eng,iso_code, sero_sub_genotype_eng,Outbreak_start_date,Species,cases, Longitude, Latitude )
 
 # CLEAN AND PREPARE DATA---------------------------------
 
@@ -45,11 +45,11 @@ europe_data <- europe_data[europe_data$Species %in% birdFam$V1,]
 
 #we only want data from Europe (so filter using the europe shapefile) and data from 2016 and onwards
 europe_data <-europe_data %>%
-  filter(iso_code %in% unique(europeanCountries$ADM0_A3),Outbreak_start_date >"2015-12-31")
+  dplyr::filter(iso_code %in% unique(europeanCountries$ADM0_A3),Outbreak_start_date >"2015-12-31")
 
 #we only look at H5
 europe_data <-europe_data %>%
-  filter(grepl("H5",sero_sub_genotype_eng))
+  dplyr::filter(grepl("H5",sero_sub_genotype_eng))
 
 #we need the last date of data for different calculations later
 endDate <- max(europe_data$Outbreak_start_date)
@@ -60,8 +60,8 @@ europe_data$cases<- 1
 
 ## Dates and week numbers are tricky as they differ from year to year. Here we use iso 8601 to create the new variables - isoweek aned isoyear
 europe_data <-europe_data %>%
-  mutate(isoweek=lubridate::isoweek(Outbreak_start_date)) %>%
-  mutate(isoyear=lubridate::isoyear(Outbreak_start_date))
+  dplyr::mutate(isoweek=lubridate::isoweek(Outbreak_start_date)) %>%
+  dplyr::mutate(isoyear=lubridate::isoyear(Outbreak_start_date))
 
 
 # check if any observations with week 53 ?
@@ -86,20 +86,20 @@ for (i in 1:nrow(europe_data)){
 
 ## now aggregate per week per year per country
 europe_data_weekly <- europe_data  %>%
-  group_by(iso_code, isoweek,isoyear) %>% summarise(no_outbreaks = sum(cases))
+  dplyr::group_by(iso_code, isoweek,isoyear) %>% dplyr::summarise(no_outbreaks = sum(cases))
 
 colnames(europe_data_weekly)<- c("ADM0_A3", "Week", "Year","no_outbreaks")
 
 
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
-  group_by(ADM0_A3) %>%
-  complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0))
+  dplyr::group_by(ADM0_A3) %>%
+ complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0))
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%
-   group_by(ADM0_A3, Year) %>%
-  complete(Week = 1:52, fill = list(no_outbreaks = 0))
+  dplyr::group_by(ADM0_A3, Year) %>%
+complete(Week = 1:52, fill = list(no_outbreaks = 0))
 
 #set rest of final year to NA after last week with detection reports
 endWeek <-as.numeric(strftime(endDate, format = '%V'))
@@ -126,14 +126,14 @@ europe_data_weekly <- merge(europe_data_weekly, covar_eur, by="ADM0_A3")
 
 # get data on area of country
 area_data <- as.data.frame(europeanCountries) %>%
-  distinct(ADM0_A3,area_sqkm)
+  dplyr::distinct(ADM0_A3,area_sqkm)
 
 # now merge with our data set
 europe_data_weekly <- merge(europe_data_weekly, area_data, by="ADM0_A3")
 
 #select only needed columns
 europe_data_weekly <-europe_data_weekly %>%
-  select(ADM0_A3, Year, Week,no_outbreaks, Wet_km, Coast_km, area_sqkm )
+  dplyr::select(ADM0_A3, Year, Week,no_outbreaks, Wet_km, Coast_km, area_sqkm )
 
 # CREATE DATA, NEIGHBORHOOD AND COVARIATE MATRICES ###
 #first read in shapefile where water is added as polygons to account for countries with water between them still being connected in a bird's perspective
@@ -165,7 +165,7 @@ AI_weekly <-res %>%  pivot_wider(
   names_from = ADM0_A3,
   values_from = no_outbreaks,
   id_cols = c(Year, Week)) %>%
-  select(-Year,-Week) %>%
+  dplyr::select(-Year,-Week) %>%
   as.matrix()
 
 #Create separate covariate matrices to be used in hhh4 model
@@ -175,7 +175,7 @@ AI_coast <-res1 %>%  pivot_wider(
   names_from = ADM0_A3,
   values_from = Coast_km,
   id_cols = c(Year, Week)) %>%
-  select(-Year,-Week) %>%
+  dplyr::select(-Year,-Week) %>%
   as.matrix()
 
 #amount of wetland
@@ -184,7 +184,7 @@ AI_wet <-res2 %>%  pivot_wider(
   names_from = ADM0_A3,
   values_from = Wet_km,
   id_cols = c(Year, Week)) %>%
-  select(-Year,-Week) %>%
+  dplyr::select(-Year,-Week) %>%
   as.matrix()
 
 # country area
@@ -193,6 +193,6 @@ country_area <-res3 %>%  pivot_wider(
   names_from = ADM0_A3,
   values_from = area_sqkm,
   id_cols = c(Year, Week)) %>%
-  select(-Year,-Week) %>%
+  dplyr::select(-Year,-Week) %>%
   as.matrix()
 

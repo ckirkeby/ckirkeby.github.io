@@ -32,7 +32,8 @@ library(qs)
 #setwd("C:/ENIGMAdata/")
 # setwd("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/")
 #setwd("C:/Users/zxd598/Documents/GitHub/ku-awdc.github.io/ENIGMA2023/")
- setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/")
+setwd("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/")
+#setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/")
 # Find the file:
 ff <- list.files(pattern="infur")
 # Define filename:
@@ -117,7 +118,7 @@ save_date <- Sys.Date()
 # Save the data in an (arbitrarily names file format) ".car"  format:
 # We set the wd temporarily to tmp, to save a ".car" file:
 # setwd("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/tmp")
- setwd("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/tmp")
+setwd("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/tmp")
 qs::qsave(list(ai_data=ai_data, 
                save_date=save_date, 
                filename=filename,
@@ -139,8 +140,8 @@ qs::qsave(list(ai_data=ai_data,
                AI_sts=AI_sts,
                final_model=final_model), 
           file="for_ai.car", preset="archive")
-file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
-# file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
+# file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
+file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
 
 # Clean up:
 rm(ai_data)

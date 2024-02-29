@@ -81,18 +81,18 @@ shinyApp(
                      c("Map of detections"="hpai_map",
                        "Timeseries" = "hpai_timeseries",
                        "Model fit" = "country_modelfit",
-                       "Forecasting" = "forecasting"),selected="hpai_timeseries"),
+                       "Forecasting" = "forecasting"),selected="forecasting"),
         
         #if predictions are chose, here you select country
         conditionalPanel(
           condition = "input.graph == 'country_modelfit'",
-          selectInput("predictions_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Denmark"))
+          selectInput("predictions_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
         ),
         
         # if forecasting is chosen, here you pick country
         conditionalPanel(
           condition = "input.graph == 'forecasting'",
-          selectInput("forecasting_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Denmark"))
+          selectInput("forecasting_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
         ),
         #text under the panel
         HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),

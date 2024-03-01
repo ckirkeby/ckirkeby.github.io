@@ -119,6 +119,9 @@ shinyApp(
         
         # Output: Tabset w/ model description and model output panel ----
         tabsetPanel(
+          tabPanel("Model output", downloadButton("downloadPlot", "Download"),plotOutput("graph",height = 500, width = 900), textOutput("info"), DTOutput("table")),
+                  
+        
           tabPanel("Model description",
                    
                    h3("Endemic-epidemic modelling of highly pathogenic avian influenza in Europe"),
@@ -137,8 +140,8 @@ shinyApp(
                      h5(HTML("<b>Disclaimer and caption</b>"), style="text-align:left;background-color: #ffffff;width: 50%;font-size:85%;"),
                      p(HTML("<i>Data extracted by Lene Jung Kjær and Carsten Kirkeby, University of Copenhagen. WOAH bears no responsibility for the integrity or accuracy of the data contained herein, but not limited to, any deletion, manipulation, or reformatting of data that may have occurred beyond its control. For some events, incorrect data have recently been detected in the figures containing the quantitative information of the outbreaks. WOAH is currently undertaking considerable efforts to solve these issues at the source and provide a dataset that is fully consistent with that reported by countries. The remaining fields of the table are not impacted by these issues. We will keep our users informed as the situation develops.</i>"),style="text-align:justify;background-color: #ffffff;width: 100%;font-size:85%;"))
                    
-          ),
-          tabPanel("Model output", downloadButton("downloadPlot", "Download"),plotOutput("graph",height = 500, width = 900), textOutput("info"), DTOutput("table"))
+          )
+         
         )
       )
     )

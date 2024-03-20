@@ -31,9 +31,6 @@ library(qs)
 #filepath <- "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
 filepath <- "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
 
-#setwd("C:/ENIGMAdata/")
-# setwd("C:/Users/zxd598/Documents/GitHub/ku-awdc.github.io/ENIGMA2023/")
-#setwd("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023")
 setwd(filepath)
 # Find the file:
 ff <- list.files(pattern="infur")
@@ -121,7 +118,6 @@ save_date <- Sys.Date()
 # PIL IKKE VED DETTE!!: Det gør jeg nu alligevel - når det er mig, der opdaterer (Lene) :-)
 setwd(paste0(filepath,"tmp"))
 
-#setwd("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/tmp")
 qs::qsave(list(ai_data=ai_data, 
                save_date=save_date, 
                filename=filename,
@@ -144,7 +140,6 @@ qs::qsave(list(ai_data=ai_data,
                final_model=final_model), 
           file="for_ai.car", preset="archive")
 file.copy(file.path(getwd(), "for_ai.car"), paste0(filepath, "for_ai.car"), overwrite=TRUE)
-#file.copy(file.path(getwd(), "for_ai.car"), "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/for_ai.car", overwrite=TRUE)
 
 # Clean up:
 rm(ai_data)

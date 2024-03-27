@@ -333,7 +333,7 @@ shinyApp(
     })
     # forecasting, summed all countries  
     AllCountry_forecasting <- reactive({
-      myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim()*0.8),fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=0.8,mar = c(7, 5, 4.1, 2.1)))
+      myPlot <-plot(sim(), observed=FALSE,ylab="",xlab="", main="Summed all countries",type="fan", means.args = list(),xaxis=list(epochsAsDate=TRUE, xaxis.tickFreq=list("%d"=atChange, "%m"=atChange),xaxis.labelFreq=list("%d"=atMedian), xaxis.labelFormat="%G\n\n%d-%b"), ylim=range(sim()*0.8),fan.args=list(ln = c(10,50,90)),par.settings=list(pch=1,cex=1,mar = c(7, 5, 4.1, 2.1)))
       title(xlab="Time", line=1)
       title(ylab="No. of detected/predicted cases", line=3)
       grid()

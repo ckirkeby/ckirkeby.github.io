@@ -423,7 +423,7 @@ shinyApp(
           paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_", input$predictions_options,"_", Sys.Date(),".png")
         } else{paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_",  Sys.Date(),".png")}},
       content = function(file) {
-        png(file,width = 13, height = 8, units = 'in', res = 300)
+        png(file,width = 13, height = 8, units = 'in', res = 600)
         replayPlot(eval(parse(text = getPlotName())))
         makeFootnote(paste0("ENIGMA model results based on model from Kjær et al. (2023), using WOAH-WAHIS data from ", strftime(input$dateRange[1],format='%d/%m/%Y')," to ",strftime(input$dateRange[2],format='%d/%m/%Y'), ". Downloaded on ", format(Sys.time(), "%d/%m/%Y")))
         dev.off()

@@ -45,6 +45,7 @@ ff <- list.files(pattern="infur")
 # Define filename:
 filename <- ff[which.max(file.info(ff)[,"mtime"])]
 # Obs! filename cannot contain stuff like (1)!...
+filename
 # Safety first:
 stopifnot(length(filename)==1)
 # Extract just the filename:

@@ -67,9 +67,9 @@ shinyApp(
     # ),
    
     fluidRow(
-      column(3, img(height = 200, width = 280, src = "ENIGMAlogo.png")),
+      column(3, img(height = 160, width = 240, src = "ENIGMAlogo.png")),
       column(6, offset=2,"ENIGMA HPAI model version 1.0"), 
-       column(1, img(height = 180, width =140, src = "ku_logo_uk_v.png"))
+       column(1, img(height = 160, width =130, src = "ku_logo_uk_v.png"))
     )
     ),
     

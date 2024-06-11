@@ -30,6 +30,7 @@ library(qs)
 library(countrycode)
 library(DT)
 library(lubridate)
+library(readxl)
 
 ### READ IN newest OIE DATA ###
 ##link to where files are - the below code will pick the newest file in the folder
@@ -38,7 +39,8 @@ download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
 qs::qload(tt)
 updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
 file.remove(tt)
-
+#endDate <- Sys.Date()
+maxdate<- Sys.Date()
 
 
 ## FUNCTION TO MAKE FOOTNOTES IN DOWNLOADED PLOTS FROM SHINY ##
@@ -79,10 +81,14 @@ shinyApp(
       # Sidebar panel for inputs ----
       sidebarPanel(
         #data range input
-        dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
+        dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(maxdate, format = '%d/%m/%Y'),", see model description for details about date range)."),
                        min=as.Date(mindate), max=as.Date(maxdate),
                        start = "2021-09-27",
                        end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
+        # dateRangeInput("dateRange", paste0(maxdate,"Select Date Range (needs to be within 27/09/2021 and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
+        #                min=as.Date(mindate), max=as.Date(maxdate),
+        #                start = "2021-09-27",
+        #                end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
         
         
         
@@ -243,7 +249,7 @@ shinyApp(
     })
     
     end <-  reactive({
-      as.numeric(floor(difftime(input$dateRange[2], '2021-09-27',units="weeks")+1))   
+      as.numeric(floor(difftime(input$dateRange[2], '2021-09-27',units="weeks")+1))
     })
     
     #now we calculate number of outbreaks for each country for the time period chosen for plotting
@@ -252,7 +258,7 @@ shinyApp(
         filter(yearweek>=startYearWeek() & yearweek <=endYearWeek()) %>% 
         group_by(ADM0_A3) %>% summarise(no_outbreaks = sum(no_outbreaks, na.rm=T))
     })
-    
+
     #Merge with shapefiles of Europe for plotting
     europe_mapData<- reactive ({
       t1 <- merge(europeanCountries, europe_mapData1(),by="ADM0_A3")

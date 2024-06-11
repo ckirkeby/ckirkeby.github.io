@@ -86,7 +86,7 @@ start_Y <- 2021
 
 # set min and max date of data for shiny app
 mindate <- '2021-09-27'
-maxdate<- endDate
+maxdate<- Sys.Date() #endDate
 
 ### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
 #Parameters in the sts object are created in the Data preparation script. Observed are the counts, start is start year and sample number, frequency is number of observations per year (here weekly), and neighborhood is based on adjacency calculations of spatial polygons (here europeanCountries.sub):

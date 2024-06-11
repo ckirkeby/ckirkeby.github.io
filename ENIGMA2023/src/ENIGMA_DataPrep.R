@@ -10,6 +10,7 @@
 # You should have received a copy of the GNU General Public License along with the ENIGMA HPAI model. If not, see <https://www.gnu.org/licenses/>.
 ##############################################################################################
 
+maxdate<- Sys.Date()
 
 # READ IN SHAPEFILE OF THE STUDY REGION ###
 europeanCountries = st_read('./data/GIS/Europe_shapefiles.shp')
@@ -52,7 +53,9 @@ europe_data <-europe_data %>%
   dplyr::filter(grepl("H5",sero_sub_genotype_eng))
 
 #we need the last date of data for different calculations later
-endDate <- max(europe_data$Outbreak_start_date)
+#endDate <- max(europe_data$Outbreak_start_date)
+endDate <- Sys.Date()
+current_week <- week(Sys.Date())
 
 #set all cases to 1, so we are counting number of outbreaks instead of number of birds affected
 europe_data$cases<- 1
@@ -94,18 +97,18 @@ colnames(europe_data_weekly)<- c("ADM0_A3", "Week", "Year","no_outbreaks")
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
   dplyr::group_by(ADM0_A3) %>%
- complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0))
+ complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0)) %>% 
+  complete(Year = 2016:2024, Week = 1:current_week, fill = list(no_outbreaks = 0)) # this line is added CKIR 20240611
+# I have added leading zeroes for every country up to the current week.
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%
   dplyr::group_by(ADM0_A3, Year) %>%
-complete(Week = 1:52, fill = list(no_outbreaks = 0))
+complete(Week = 1:52, fill = list(no_outbreaks = 0)) # Der er jo ikke nogen NA´er her - de blev fjernet i linje 61?
 
 #set rest of final year to NA after last week with detection reports
 endWeek <-as.numeric(strftime(endDate, format = '%V'))
 endYear <-as.numeric(strftime(endDate, format = '%Y'))
-
-current_week <- week(Sys.Date())
    
 europe_data_weekly$no_outbreaks[europe_data_weekly$Year==endYear & europe_data_weekly$Week>current_week] <- NA
 

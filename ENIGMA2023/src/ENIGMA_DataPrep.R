@@ -105,7 +105,9 @@ complete(Week = 1:52, fill = list(no_outbreaks = 0))
 endWeek <-as.numeric(strftime(endDate, format = '%V'))
 endYear <-as.numeric(strftime(endDate, format = '%Y'))
 
-europe_data_weekly$no_outbreaks[europe_data_weekly$Year==endYear & europe_data_weekly$Week>endWeek] <- NA
+current_week <- week(Sys.Date())
+   
+europe_data_weekly$no_outbreaks[europe_data_weekly$Year==endYear & europe_data_weekly$Week>current_week] <- NA
 
 europe_data_weekly$no_outbreaks[europe_data_weekly$Year>endYear ] <- NA
 

@@ -62,7 +62,17 @@ shinyApp(
     # for Carstens tracker
     tags$head(includeHTML("head.html"),includeHTML("head_ljkjaer.html")),
     # Title and logo
-    titlePanel(title=div(img(src="ku_logo_uk_v.png",height = 100, width = 80),"ENIGMA HPAI model version 1.0"), windowTitle = "ENIGMA HPAI model"),
+    titlePanel(
+    # titlePanel(title=div(img(src="ku_logo_uk_v.png",height = 100, width = 80),"ENIGMA HPAI model version 1.0",img(src="ENIGMAlogo.png",height = 120, width = 160), windowTitle = "ENIGMA HPAI model"),
+    # ),
+   
+    fluidRow(
+      column(3, img(height = 150, width = 240, src = "ENIGMAlogo.png")),
+      column(6, offset=2,"ENIGMA HPAI model v. 1.0"), 
+       column(1, img(height = 160, width =130, src = "ku_logo_uk_v.png"))
+    )
+    ),
+    
     # Sidebar layout with input and output definitions ----
     sidebarLayout(
       
@@ -98,6 +108,7 @@ shinyApp(
         HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),
         div(span("The purpose of this webpage is to show the predictions of the ENIGMA HPAI model. This model has been developed during research at the University of Copenhagen in "),span(a("the ENIGMA project, " , href="https://ivh.ku.dk/forskning/dyrevelfaerd-og-sygdomsbekaempelse/projektside/enigma/",target="_blank")), span("2021-2024. The ENIGMA project is based in "), span(a("the Avian Influenza Epidemiology Subgroup ", href="https://ivh.ku.dk/english/research/animal-welfare-and-disease-control/avian-influenza-epidemiology/",target="_blank")),span("at the University of Copenhagen and is part of the "),span(a("Danish Veterinary Contingency Consortium (DKVET) ", href="https://dkvet.dk/english/about/", target="_blank")),span("funded by the Danish Food and Veterinary Administration. R code and data used for the ENIGMA HPAI model is available at "), span(a("GitHub.", href="https://github.com/ckirkeby/ckirkeby.github.io/tree/main/ENIGMA2023", target="_blank"))),
         br(),
+        
         h5(HTML("<i>Disclaimer: The model and data reflects the state of knowledge available on the date of dispatch. The University of Copenhagen and DKVET cannot be held liable for any errors, inaccuracies or inconsistencies with regard to text and/or data contained therein. Therefore, the University of Copenhagen and DKVET accept no responsibility or liability arising out of, or in connection with the information provided.</i>")),
         br(),
         h5(HTML("The ENIGMA project is co-funded by the European Union through the European Partnership on Animal Health and Welfare")),

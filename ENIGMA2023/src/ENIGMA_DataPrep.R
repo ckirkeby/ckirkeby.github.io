@@ -29,7 +29,7 @@ updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format
 # the code above downloaded the data set called ai_data, here we select only HPAI and only select some of the variables in the WOAH-WAHIS data, as we do not need them all
 europe_data <-ai_data %>% 
   filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)")) %>% 
-  select(disease_eng,iso_code, sero_sub_genotype_eng,Outbreak_start_date,Species,cases, Longitude, Latitude )
+  dplyr::select(disease_eng,iso_code, sero_sub_genotype_eng,Outbreak_start_date,Species,cases, Longitude, Latitude )
 
 # CLEAN AND PREPARE DATA---------------------------------
 

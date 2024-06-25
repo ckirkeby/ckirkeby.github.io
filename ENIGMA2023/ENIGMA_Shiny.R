@@ -84,7 +84,7 @@ shinyApp(
         dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(maxdate, format = '%d/%m/%Y'),", see model description for details about date range)."),
                        min=as.Date(mindate), max=as.Date(maxdate),
                        start = "2021-09-27",
-                       end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
+                       end = strftime(maxdate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
         # dateRangeInput("dateRange", paste0(maxdate,"Select Date Range (needs to be within 27/09/2021 and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
         #                min=as.Date(mindate), max=as.Date(maxdate),
         #                start = "2021-09-27",

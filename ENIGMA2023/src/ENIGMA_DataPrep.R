@@ -10,7 +10,6 @@
 # You should have received a copy of the GNU General Public License along with the ENIGMA HPAI model. If not, see <https://www.gnu.org/licenses/>.
 ##############################################################################################
 
-maxdate<- Sys.Date()
 
 # READ IN SHAPEFILE OF THE STUDY REGION ###
 europeanCountries = st_read('./data/GIS/Europe_shapefiles.shp')
@@ -29,7 +28,7 @@ updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format
 
 # the code above downloaded the data set called ai_data, here we select only HPAI and only select some of the variables in the WOAH-WAHIS data, as we do not need them all
 europe_data <-ai_data %>% 
-  dplyr::filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)")) %>% 
+  filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)")) %>% 
   dplyr::select(disease_eng,iso_code, sero_sub_genotype_eng,Outbreak_start_date,Species,cases, Longitude, Latitude )
 
 # CLEAN AND PREPARE DATA---------------------------------
@@ -46,16 +45,14 @@ europe_data <- europe_data[europe_data$Species %in% birdFam$V1,]
 
 #we only want data from Europe (so filter using the europe shapefile) and data from 2016 and onwards
 europe_data <-europe_data %>%
-  dplyr::filter(iso_code %in% unique(europeanCountries$ADM0_A3),Outbreak_start_date >"2015-12-31")
+  filter(iso_code %in% unique(europeanCountries$ADM0_A3),Outbreak_start_date >"2015-12-31")
 
 #we only look at H5
 europe_data <-europe_data %>%
-  dplyr::filter(grepl("H5",sero_sub_genotype_eng))
+  filter(grepl("H5",sero_sub_genotype_eng))
 
 #we need the last date of data for different calculations later
-#endDate <- max(europe_data$Outbreak_start_date)
-endDate <- Sys.Date()
-current_week <- week(Sys.Date())
+endDate <- max(europe_data$Outbreak_start_date)
 
 #set all cases to 1, so we are counting number of outbreaks instead of number of birds affected
 europe_data$cases<- 1
@@ -63,8 +60,8 @@ europe_data$cases<- 1
 
 ## Dates and week numbers are tricky as they differ from year to year. Here we use iso 8601 to create the new variables - isoweek aned isoyear
 europe_data <-europe_data %>%
-  dplyr::mutate(isoweek=lubridate::isoweek(Outbreak_start_date)) %>%
-  dplyr::mutate(isoyear=lubridate::isoyear(Outbreak_start_date))
+  mutate(isoweek=lubridate::isoweek(Outbreak_start_date)) %>%
+  mutate(isoyear=lubridate::isoyear(Outbreak_start_date))
 
 
 # check if any observations with week 53 ?
@@ -89,30 +86,38 @@ for (i in 1:nrow(europe_data)){
 
 ## now aggregate per week per year per country
 europe_data_weekly <- europe_data  %>%
-  dplyr::group_by(iso_code, isoweek,isoyear) %>% dplyr::summarise(no_outbreaks = sum(cases))
+  group_by(iso_code, isoweek,isoyear) %>% summarise(no_outbreaks = sum(cases))
 
 colnames(europe_data_weekly)<- c("ADM0_A3", "Week", "Year","no_outbreaks")
 
 
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
-  dplyr::group_by(ADM0_A3) %>%
- complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0)) %>% 
-  complete(Year = 2016:2024, Week = 1:current_week, fill = list(no_outbreaks = 0)) # this line is added CKIR 20240611
-# I have added leading zeroes for every country up to the current week.
+  group_by(ADM0_A3) %>%
+  complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0))
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%
-  dplyr::group_by(ADM0_A3, Year) %>%
-complete(Week = 1:52, fill = list(no_outbreaks = 0)) # Der er jo ikke nogen NA´er her - de blev fjernet i linje 61?
+   group_by(ADM0_A3, Year) %>%
+  complete(Week = 1:52, fill = list(no_outbreaks = 0))
 
 #set rest of final year to NA after last week with detection reports
 endWeek <-as.numeric(strftime(endDate, format = '%V'))
 endYear <-as.numeric(strftime(endDate, format = '%Y'))
-   
-europe_data_weekly$no_outbreaks[europe_data_weekly$Year==endYear & europe_data_weekly$Week>current_week] <- NA
+
+europe_data_weekly$no_outbreaks[europe_data_weekly$Year==endYear & europe_data_weekly$Week>endWeek] <- NA
 
 europe_data_weekly$no_outbreaks[europe_data_weekly$Year>endYear ] <- NA
+
+updateWeek <- as.numeric(strftime(updateDate, format = '%V'))
+endWeek <- as.numeric(strftime(endDate, format = '%V'))
+diff <- updateWeek-endWeek
+
+# check if endWeek in data is much earlier than updateWeek (meaning that we have actual weeks with zero detections) and if so check if 2 consecutive weeks within that time frame is NA - if so set the first week to zero
+for(i in 1:diff) {
+  ifelse((is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]) & is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==(i+endWeek+1) & europe_data_weekly$Year==endYear])),    (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear] <-replicate(37,0)), (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]=NA))
+}
+endWeek<- updateWeek
 
 ### READ IN COVARIATES ###
 ## read in file on coastal length and area of wetland
@@ -131,7 +136,7 @@ europe_data_weekly <- merge(europe_data_weekly, covar_eur, by="ADM0_A3")
 
 # get data on area of country
 area_data <- as.data.frame(europeanCountries) %>%
-  dplyr::distinct(ADM0_A3,area_sqkm)
+  distinct(ADM0_A3,area_sqkm)
 
 # now merge with our data set
 europe_data_weekly <- merge(europe_data_weekly, area_data, by="ADM0_A3")

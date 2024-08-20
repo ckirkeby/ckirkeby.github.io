@@ -68,11 +68,12 @@ shinyApp(
     # titlePanel(title=div(img(src="ku_logo_uk_v.png",height = 100, width = 80),"ENIGMA HPAI model version 1.0",img(src="ENIGMAlogo.png",height = 120, width = 160), windowTitle = "ENIGMA HPAI model"),
     # ),
    
-    fluidRow(
-      column(3, img(height = 150, width = 240, src = "ENIGMAlogo.png")),
-      column(6, offset=2,"ENIGMA HPAI model v. 1.0"), 
-       column(1, img(height = 160, width =130, src = "ku_logo_uk_v.png"))
-    )
+      fluidRow(
+        column(3, img(height = 150, width = 240, src = "ENIGMAlogo.png")),
+        column(6, offset=2,"ENIGMA HPAI model version 1.0"), 
+        column(6, offset=2,"ENIGMA HPAI model v. 1.0"), 
+        column(1, img(height = 160, width =130, src = "ku_logo_uk_v.png"))
+      )
     ),
     
     # Sidebar layout with input and output definitions ----

@@ -1,6 +1,17 @@
 
 ## Copyright © 2023 Lene J. Kjær, Michael P. Ward, Anette E. Boklund, Lars E. Larsen, Charlotte K. Hjulsager, and Carsten T. Kirkeby ”
 
+#### Procedure: ####
+
+# 1) Download latest infur file from the online WOAH repository to the ENGIMAdata 
+#    folder
+# 2) Run the above code that saves the file as a .car file (random file type)
+# 3) Open Github Desktop and push the change made in the ENIGMA2023 repository 
+#    within the ku-awdc.github.io folder (with the new .car file)
+# 4) The app should automatically take the new file as input, and be updated.
+
+
+
 ##############################################################################################
 # This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.   
 
@@ -155,13 +166,4 @@ rm(ai_data)
 
 
 
-
-#### Procedure: ####
-
-# 1) Download latest infur file from the online WOAH repository to the ENGIMAdata 
-#    folder
-# 2) Run the above code that saves the file as a .car file (random file type)
-# 3) Open Github Desktop and push the change made in the ENIGMA2023 repository 
-#    within the ku-awdc.github.io folder (with the new .car file)
-# 4) The app should automatically take the new file as input, and be updated.
 

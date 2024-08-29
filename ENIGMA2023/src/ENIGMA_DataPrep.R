@@ -114,8 +114,10 @@ endWeek <- as.numeric(strftime(endDate, format = '%V'))
 diff <- updateWeek-endWeek
 
 # check if endWeek in data is much earlier than updateWeek (meaning that we have actual weeks with zero detections) and if so check if 2 consecutive weeks within that time frame is NA - if so set the first week to zero
-for(i in 1:diff) {
-  ifelse((is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]) & is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==(i+endWeek+1) & europe_data_weekly$Year==endYear])),    (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear] <-replicate(37,0)), (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]=NA))
+if(diff>0) {
+  for(i in 1:diff) {
+    ifelse((is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]) & is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==(i+endWeek+1) & europe_data_weekly$Year==endYear])),    (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear] <-replicate(37,0)), (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]=NA))
+  }
 }
 endWeek<- updateWeek
 

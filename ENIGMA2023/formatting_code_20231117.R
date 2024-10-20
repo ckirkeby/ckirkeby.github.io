@@ -3,21 +3,21 @@
 
 #### Procedure: ####
 
-# 1) Download latest infur file from the online WOAH repository to the ENGIMAdata 
+# 1) Download latest infur file from the online WOAH repository to the ENGIMAdata
 #    folder
 # 2) Run the above code that saves the file as a .car file (random file type)
-# 3) Open Github Desktop and push the change made in the ENIGMA2023 repository 
+# 3) Open Github Desktop and push the change made in the ENIGMA2023 repository
 #    within the ku-awdc.github.io folder (with the new .car file)
 # 4) The app should automatically take the new file as input, and be updated.
 
 
 
 ##############################################################################################
-# This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.   
+# This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.
 
-# The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.                                   
+# The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-# The ENIGMA HPAI model is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.                                                
+# The ENIGMA HPAI model is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License along with the ENIGMA HPAI model. If not, see <https://www.gnu.org/licenses/>.
 ##############################################################################################
@@ -45,6 +45,10 @@ if(file.exists("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"))
 {
   filepath <- "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"
 }
+if(file.exists("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
+{
+  filepath <- "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
+}
 if(file.exists("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
 {
   filepath <- "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
@@ -61,7 +65,7 @@ filename
 stopifnot(length(filename)==1)
 # Extract just the filename:
 sheetname <-basename(filename) |>
-  stringr::str_extract("(.*)\\.\\w+", group = 1) 
+  stringr::str_extract("(.*)\\.\\w+", group = 1)
 # Read in the data:
 ai_data <- readxl::read_excel(filename, sheet=sheetname)
 
@@ -71,7 +75,7 @@ ai_data <- readxl::read_excel(filename, sheet=sheetname)
 source('./src/ENIGMA_custom_functions.R')
 
 ### RUN THE DATA PREPARATION SCRIPT ###
-source('./src/ENIGMA_DataPrep.R') 
+source('./src/ENIGMA_DataPrep.R')
 
 
 ### NOW RUN MODEL BASED ON THR LATEST DATA, BUT STARTING IN WEEK 39 IN  2021
@@ -99,15 +103,15 @@ maxdate<- format(as.Date(updateDate, format = "%d/%m/%Y"), "%Y-%m-%d")#endDate
 
 ### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
 #Parameters in the sts object are created in the Data preparation script. Observed are the counts, start is start year and sample number, frequency is number of observations per year (here weekly), and neighborhood is based on adjacency calculations of spatial polygons (here europeanCountries.sub):
-AI_sts <- sts(observed = AI_weekly1, start = c(as.numeric(start_Y), as.numeric(start_W)), 
-              frequency = 52,neighbourhood = europe_adjmat, 
+AI_sts <- sts(observed = AI_weekly1, start = c(as.numeric(start_Y), as.numeric(start_W)),
+              frequency = 52,neighbourhood = europe_adjmat,
               map = europeanCountries.sub)
 
 # here we set the training data set - which is basically the whole data starting at the second week, as we already validated the model earlier
 TRAIN <- 2:(subset_trainTest-subset_start +1)
 
 # these variables are created to keep track of country placement and country names in the AI_sts object. They are used for plotting predictions and simulations for individual countries
-districts2plot<-  which(colSums(observed(AI_sts), na.rm=T) > 50) 
+districts2plot<-  which(colSums(observed(AI_sts), na.rm=T) > 50)
 districts2plot1 <- countrycode(as.character(names(districts2plot)),"iso3c","country.name")
 names(districts2plot) <- districts2plot1
 districts2plot <-districts2plot[order((names(districts2plot)))]
@@ -119,8 +123,8 @@ area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_a
 
 ### FINAL MODEL FROM KJÆR ET AL. 2023###
 #model with long distance transmission, random effects and seasonality in the epidemic component
-final_model_base <- list(end = list(f = ~1 + ri(type = "iid") - 1,offset=area_frac), ar = list(f=addSeason2formula( ~ 1 +t+ ri(type = "iid") - 1, S=2, period= AI_sts@freq)), 
-                         ne = list(f = ~1 + ri(type = "iid") - 1, weights = W_powerlaw(maxlag = max(neighbourhood(AI_sts),log = TRUE,normalize = TRUE, from0 = TRUE))), 
+final_model_base <- list(end = list(f = ~1 + ri(type = "iid") - 1,offset=area_frac), ar = list(f=addSeason2formula( ~ 1 +t+ ri(type = "iid") - 1, S=2, period= AI_sts@freq)),
+                         ne = list(f = ~1 + ri(type = "iid") - 1, weights = W_powerlaw(maxlag = max(neighbourhood(AI_sts),log = TRUE,normalize = TRUE, from0 = TRUE))),
                          family = "NegBin1",optimizer = list(stop = list(tol=1e-5, niter=500),
                                                              regression = list(method="nlminb"),
                                                              variance = list(method="Nelder-Mead")),subset = TRAIN, keep.terms = TRUE)
@@ -136,8 +140,8 @@ save_date <- Sys.Date()
 # PIL IKKE VED DETTE!!: Det gør jeg nu alligevel - når det er mig, der opdaterer (Lene) :-)
 setwd(paste0(filepath,"tmp"))
 
-qs::qsave(list(ai_data=ai_data, 
-               save_date=save_date, 
+qs::qsave(list(ai_data=ai_data,
+               save_date=save_date,
                filename=filename,
                endDate=endDate,
                updateDate=updateDate,
@@ -146,16 +150,16 @@ qs::qsave(list(ai_data=ai_data,
                AI_weekly=AI_weekly,
                AI_weekly1=AI_weekly1,
                AI_wet=AI_wet,
-               AI_coast=AI_coast,                
+               AI_coast=AI_coast,
                europe_adjmat=europe_adjmat,
                europeanCountries.sub=europeanCountries.sub,
                europeanCountries=europeanCountries,
                mindate=mindate,
                maxdate=maxdate,
                districts2plot=districts2plot,
-               districts2plot2=districts2plot2,   
+               districts2plot2=districts2plot2,
                AI_sts=AI_sts,
-               final_model=final_model), 
+               final_model=final_model),
           file="for_ai.car", preset="archive")
 file.copy(file.path(getwd(), "for_ai.car"), paste0(filepath, "for_ai.car"), overwrite=TRUE)
 

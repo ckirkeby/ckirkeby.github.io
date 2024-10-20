@@ -127,7 +127,7 @@ final_model_base <- list(end = list(f = ~1 + ri(type = "iid") - 1,offset=area_fr
                          ne = list(f = ~1 + ri(type = "iid") - 1, weights = W_powerlaw(maxlag = max(neighbourhood(AI_sts),log = TRUE,normalize = TRUE, from0 = TRUE))),
                          family = "NegBin1",optimizer = list(stop = list(tol=1e-5, niter=500),
                                                              regression = list(method="nlminb"),
-                                                             variance = list(method="Nelder-Mead")),subset = TRAIN, keep.terms = TRUE)
+                                                             variance = list(method="Nelder-Mead")), keep.terms = TRUE)
 final_model <-hhh4(stsObj = AI_sts,control = final_model_base)
 
 ################################################################################

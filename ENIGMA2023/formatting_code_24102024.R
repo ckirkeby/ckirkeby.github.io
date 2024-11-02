@@ -108,7 +108,7 @@ start_W <- endWeek+1-13
 start_Y <- endYear-1
 
 # set min and max date of data for shiny app
-mindate <- as.Date(make_yearweek(year  = start_Y, week = start_W, 
+minDate <- as.Date(make_yearweek(year  = start_Y, week = start_W, 
                                  week_start = 1))
 maxdate<- format(as.Date(updateDate, format = "%d/%m/%Y"), "%Y-%m-%d")#endDate
 
@@ -164,7 +164,7 @@ qs::qsave(list(ai_data=ai_data,
                europe_adjmat=europe_adjmat,
                europeanCountries.sub=europeanCountries.sub,
                europeanCountries=europeanCountries,
-               mindate=mindate,
+               minDate=minDate,
                maxdate=maxdate,
                districts2plot=districts2plot,
                districts2plot2=districts2plot2,   

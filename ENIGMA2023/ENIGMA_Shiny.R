@@ -83,16 +83,12 @@ shinyApp(
       # Sidebar panel for inputs ----
       sidebarPanel(
         #data range input
-        # dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(maxdate, format = '%d/%m/%Y'),", see model description for details about date range)."),
-        #                min=as.Date(mindate), max=as.Date(maxdate),
-        #                start = "2021-09-27",
-        #                end = strftime(maxdate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
-        dateRangeInput("dateRange", paste0(maxdate,"Select Date Range (needs to be within", strftime(mindate, format = '%d/%m/%Y'), "and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
-                       min=as.Date(mindate), max=as.Date(maxdate),
-                       start = strftime(minDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
-                       end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
 
-
+        dateRangeInput("dateRange", paste0("Select Date Range (needs to be within ", strftime(minDate, format = '%d/%m/%Y'), " and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
+                       min=as.Date(minDate), max=as.Date(maxdate),
+                       start = strftime(minDate, format = 'dd/mm/yyyy'),
+                       end = strftime(endDate, format='dd/mm/yyyy')
+                       ),
 
         # buttons to picks which graphs/maps to see
         radioButtons("graph","Select:",

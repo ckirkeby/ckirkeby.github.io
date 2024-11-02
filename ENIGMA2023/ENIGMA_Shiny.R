@@ -40,7 +40,7 @@ download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
 qs::qload(tt)
 updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
 file.remove(tt)
-endDate <- Sys.Date()
+#endDate <- Sys.Date()
 maxdate<- Sys.Date()
 
 

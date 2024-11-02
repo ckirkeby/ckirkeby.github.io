@@ -87,7 +87,6 @@ europe_data_weekly$yearweek <- yearweek(paste0(europe_data_weekly$Year, ' ', eur
 europe_data$week <- paste0('W', europe_data$isoweek)
 europe_data$yearweek <- yearweek(paste0(europe_data$isoyear, ' ', europe_data$week))
 
-#subset data and covariates - to start in week 39 of 2021
 endWeek <-as.numeric(strftime(endDate, format = '%V'))
 endYear <-as.numeric(strftime(endDate, format = '%Y'))
 

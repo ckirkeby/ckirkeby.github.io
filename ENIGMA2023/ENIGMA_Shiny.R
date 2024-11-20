@@ -72,7 +72,7 @@ shinyApp(
       fluidRow(
         column(3, img(height = 150, width = 240, src = "ENIGMAlogo.png")),
         column(6, offset=2," "),
-        column(6, offset=2,"ENIGMA HPAI model version 1.0"),
+        column(6, offset=2,"ENIGMA HPAI model version 1.1"),
         column(1, img(height = 160, width =130, src = "ku_logo_uk_v.png"))
       )
     ),
@@ -83,16 +83,15 @@ shinyApp(
       # Sidebar panel for inputs ----
       sidebarPanel(
         #data range input
-        # dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(maxdate, format = '%d/%m/%Y'),", see model description for details about date range)."),
-        #                min=as.Date(mindate), max=as.Date(maxdate),
-        #                start = "2021-09-27",
-        #                end = strftime(maxdate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
-        dateRangeInput("dateRange", paste0("Select Date Range (needs to be within 27/09/2021 and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
-                       min=as.Date(mindate), max=as.Date(maxdate),
-                       start = "2021-09-27",
-                       end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'),
 
 
+      dateRangeInput("dateRange", paste0("Select Date Range (needs to be within ",strftime(minDate, format = '%d/%m/%Y'), " and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
+                     min=as.Date(minDate), max=as.Date(maxdate),
+                     start =  minDate,
+                     end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'
+                     ),
+      
+      
 
         # buttons to picks which graphs/maps to see
         radioButtons("graph","Select:",
@@ -104,13 +103,13 @@ shinyApp(
         #if predictions are chose, here you select country
         conditionalPanel(
           condition = "input.graph == 'country_modelfit'",
-          selectInput("predictions_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
+          selectInput("predictions_options","Select country (only countries with > 10 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
         ),
 
         # if forecasting is chosen, here you pick country
         conditionalPanel(
           condition = "input.graph == 'forecasting'",
-          selectInput("forecasting_options","Select country (only countries with > 50 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
+          selectInput("forecasting_options","Select country (only countries with > 10 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
         ),
         #text under the panel
         HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),
@@ -147,9 +146,9 @@ shinyApp(
           tabPanel("Model description",
 
                    h3("Endemic-epidemic modelling of highly pathogenic avian influenza in Europe"),
-                   p("The ENIGMA HPAI model results and graphs presented in this shiny app are based on the 2021-2022 model described in Kjær et al. (2023). In this study, we utilized readily available data from the World Organization for Animal Health (WOAH-WAHIS)* on highly pathogenic avian influenza (HPAI) H5 detections in wild and domestic birds together with a time-series modelling framework (Meyer et al. 2014) to predict HPAI H5 detections within Europe. This framework decomposes time series data into endemic and epidemic components, where the epidemic component can take into account within-country transmission and between-country transmission as well as short-distance (from directly neighbouring countries) and long-distance (transmission follows a distance-decay algorithm) transmission."),
-                   p("Looking at the WOAH-WAHIS data, we noticed a shift in the seasonality between 2016-late 2021, and late 2021-now, with outbreaks during the summer periods in recent years. Thus, we created different models for these time periods, and the results presented here are from the model fitted to more recent data. Therefore, the earliest date of data in this model is from late 2021. This model includes long-range transmission, and seasonality in the epidemic component, but assumes a constant contribution from endemic transmission within each country. The original model suggests that 12.2% of HPAI detections are endemic in nature, with 87.8% being epidemic in nature (73.3% within-country and 14.5% between-country transmission). This may change as more data on detections are added."),
-                   p("Due to the model being based on more recent HPAI H5 detection data, the earliest date that can be chosen in this app is Monday in week 39, 2021 and the latest date that can be chosen is the last date, from which we have HPAI H5 data from WOAH-WAHIS (updated weekly). Forecasting will always be 4 weeks ahead from the week before the last date chosen (to account for delays in WOAH-WAHIS reporting). For more details see Kjær et al. (2023) and Meyer et al. (2014)."),
+                   p("The ENIGMA HPAI model results and graphs presented in this shiny app are based on the modelling framework described in Kjær et al. (2023). In this study, we utilized readily available data from the World Organization for Animal Health (WOAH-WAHIS)* on highly pathogenic avian influenza (HPAI) H5 detections in wild and domestic birds together with a time-series modelling framework (Meyer et al. 2014) to predict HPAI H5 detections within Europe. This framework decomposes time series data into endemic and epidemic components, where the epidemic component can take into account within-country transmission and between-country transmission as well as short-distance (from directly neighbouring countries) and long-distance (transmission follows a distance-decay algorithm) transmission."),
+                   p("The WOAH-WAHIS data have revealed several shifts in the seasonality between 2016-2024, thus we only use recent data to reflect the newest transmission patterns. The results presented here are from a model fitted to data from the latest 1 1/4 year (to ensure enough data for model fitting) that includes long-range transmission, and seasonality in both the endemic and epidemic component (one seasonal wave for each component)."),
+                   p("Due to the model being based on the most recent HPAI H5 detection data, the latest date that can be chosen is the last date, from which we have HPAI H5 data from WOAH-WAHIS (updated weekly), and the earliest date that can be chosen in this app is 1 1/4 year before the last date. Forecasting will always be 4 weeks ahead from the week before the last date chosen (to account for delays in WOAH-WAHIS reporting). For more details see Kjær et al. (2023) and Meyer et al. (2014)."),
                    br(),
                    br(),
                    p(a("Kjær, L. J., M. P. Ward, A. E. Boklund, L. E. Larsen, C. K. Hjulsager, and C. T. Kirkeby. Using surveillance data for early modelling of highly pathogenic avian influenza in Europe reveals a seasonal shift in transmission, 2016-2022. 2023. Scientific Reports 13:15396.",href="https://doi.org/10.1038/s41598-023-42660-7",target="_blank",style = "font-size:85%;")),
@@ -241,17 +240,17 @@ shinyApp(
     startYearWeek <- reactive ({
       yearweek(paste0(startYear(), ' ', paste0('W',startWeek())))
     })
-
+   
     endYearWeek <-  reactive({
       yearweek(paste0(endYear(), ' ', paste0('W',endWeek())))
     })
 
     start <- reactive ({
-      as.numeric(floor(difftime(input$dateRange[1], '2021-09-27',units="weeks")+1))
+      as.numeric(floor(difftime(input$dateRange[1], minDate,units="weeks")+1))
     })
 
     end <-  reactive({
-      as.numeric(floor(difftime(input$dateRange[2], '2021-09-27',units="weeks")+1))
+      as.numeric(floor(difftime(input$dateRange[2], minDate,units="weeks")+1))
     })
 
     #now we calculate number of outbreaks for each country for the time period chosen for plotting
@@ -413,18 +412,18 @@ shinyApp(
         } else
           if(input$graph=="country_modelfit"){
             if(input$predictions_options== "Summed all countries"){
-              paste0("Overall model fit aggregated over all the 37 countries shown for ", strftime(input$dateRange[1], format= '%d/%m/%Y'), " to ", strftime(input$dateRange[2],format='%d/%m/%Y'),". The plot shows the relative contribution of model components based on the final multivariate time-series model in Kjær et al. (2023). Dots show the actual counts of reported highly pathogenic avian influenza (H5 subtype) detections in domestic and wild birds. Note that zero/missing detections have been omitted.")
+              paste0("Overall model fit aggregated over all the 37 countries shown for ", strftime(input$dateRange[1], format= '%d/%m/%Y'), " to ", strftime(input$dateRange[2],format='%d/%m/%Y'),". The plot shows the relative contribution of model components based on the modelling framework described in Kjær et al. (2023). Dots show the actual counts of reported highly pathogenic avian influenza (H5 subtype) detections in domestic and wild birds. Note that zero/missing detections have been omitted.")
             } else {
               unit<-  which(districts2plot2==input$predictions_options)
-              paste0("Model fit for ", districts2plot2[unit]," shown for ", strftime(input$dateRange[1], format='%d/%m/%Y'), " to ", strftime(input$dateRange[2],format='%d/%m/%Y'), ". The plot shows the relative contribution of model components based on the final multivariate time-series model in Kjær et al. (2023). Dots show the actual counts of reported highly pathogenic avian influenza (H5 subtype) detections in domestic and wild birds. Note that zero/missing detections have been omitted.")
+              paste0("Model fit for ", districts2plot2[unit]," shown for ", strftime(input$dateRange[1], format='%d/%m/%Y'), " to ", strftime(input$dateRange[2],format='%d/%m/%Y'), ". The plot shows the relative contribution of model components based on the modelling framework described in Kjær et al. (2023). Dots show the actual counts of reported highly pathogenic avian influenza (H5 subtype) detections in domestic and wild birds. Note that zero/missing detections have been omitted.")
             }
           } else
             if(input$graph=="forecasting"){
               if(input$forecasting_options== "Summed all countries") {
-                paste0("Simulation-based 4 week forecast using the multivariate time-series model in Kjær et al. (2023). The plots show weekly number of predicted highly pathogenic avian influenza (H5 subtype) detections aggregated over all 37 countries included in the model. The fan chart represents the 10%, 50% and 90% quantiles of the simulations (N=500) each week; their mean is displayed as a white line. The black dot to the left of the graph depicts the number of detections from week ", isoweek(input$dateRange[2])-1, " in ", isoyear(input$dateRange[2]), ". As forecasting consists of sequential calls to the negative binomial distributions developed in the model, the mean at each time point is determined by using the parameter estimates and the counts simulated at the previous time point. Thus, we used the second to last week of data (to account for delays in WOAH-WAHIS reporting) to forecast 4 weeks ahead. For further details, see Kjær et al. (2023).")
+                paste0("Simulation-based 4 week forecast based on the modelling framework described in Kjær et al. (2023). The plots show weekly number of predicted highly pathogenic avian influenza (H5 subtype) detections aggregated over all 37 countries included in the model. The fan chart represents the 10%, 50% and 90% quantiles of the simulations (N=500) each week; their mean is displayed as a white line. The black dot to the left of the graph depicts the number of detections from week ", isoweek(input$dateRange[2])-1, " in ", isoyear(input$dateRange[2]), ". As forecasting consists of sequential calls to the negative binomial distributions developed in the model, the mean at each time point is determined by using the parameter estimates and the counts simulated at the previous time point. Thus, we used the second to last week of data (to account for delays in WOAH-WAHIS reporting) to forecast 4 weeks ahead. For further details, see Kjær et al. (2023).")
               }else{
                 unit<-  which(districts2plot2==input$forecasting_options)
-                paste0("Simulation-based 4 week forecast using the multivariate time-series model in Kjær et al. (2023). The plots show weekly number of predicted highly pathogenic avian influenza (H5 subtype) detections for ",districts2plot2[unit],". The fan chart represents the 10%, 50% and 90% quantiles of the simulations (N=500) each week; their mean is displayed as a white line. The black dot to the left of the graph depicts the number of detections from week ", isoweek(input$dateRange[2])-1, " in ", isoyear(input$dateRange[2]), ". As forecasting consists of sequential calls to the negative binomial distributions developed in the model, the mean at each time point is determined by using the parameter estimates and the counts simulated at the previous time point. Thus, we used the second to last week of data (to account for delays in WOAH-WAHIS reporting) to forecast 4 weeks ahead. For further details, see Kjær et al. (2023).")
+                paste0("Simulation-based 4 week forecast based on the modelling framework described in Kjær et al. (2023). The plots show weekly number of predicted highly pathogenic avian influenza (H5 subtype) detections for ",districts2plot2[unit],". The fan chart represents the 10%, 50% and 90% quantiles of the simulations (N=500) each week; their mean is displayed as a white line. The black dot to the left of the graph depicts the number of detections from week ", isoweek(input$dateRange[2])-1, " in ", isoyear(input$dateRange[2]), ". As forecasting consists of sequential calls to the negative binomial distributions developed in the model, the mean at each time point is determined by using the parameter estimates and the counts simulated at the previous time point. Thus, we used the second to last week of data (to account for delays in WOAH-WAHIS reporting) to forecast 4 weeks ahead. For further details, see Kjær et al. (2023).")
               }
             }
     })

@@ -66,9 +66,9 @@ shinyApp(
     tags$head(includeHTML("head.html"),includeHTML("head_ljkjaer.html")),
     # Title and logo
     titlePanel(
-    # titlePanel(title=div(img(src="ku_logo_uk_v.png",height = 100, width = 80),"ENIGMA HPAI model version 1.0",img(src="ENIGMAlogo.png",height = 120, width = 160), windowTitle = "ENIGMA HPAI model"),
-    # ),
-
+      # titlePanel(title=div(img(src="ku_logo_uk_v.png",height = 100, width = 80),"ENIGMA HPAI model version 1.0",img(src="ENIGMAlogo.png",height = 120, width = 160), windowTitle = "ENIGMA HPAI model"),
+      # ),
+      
       fluidRow(
         column(3, img(height = 150, width = 240, src = "ENIGMAlogo.png")),
         column(6, offset=2," "),
@@ -76,36 +76,36 @@ shinyApp(
         column(1, img(height = 160, width =130, src = "ku_logo_uk_v.png"))
       )
     ),
-
+    
     # Sidebar layout with input and output definitions ----
     sidebarLayout(
-
+      
       # Sidebar panel for inputs ----
       sidebarPanel(
         #data range input
-
-
-      dateRangeInput("dateRange", paste0("Select Date Range (needs to be within ",strftime(minDate, format = '%d/%m/%Y'), " and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
-                     min=as.Date(minDate), max=as.Date(maxdate),
-                     start =  minDate,
-                     end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'
-                     ),
-      
-      
-
+        
+        
+        dateRangeInput("dateRange", paste0("Select Date Range (needs to be within ",strftime(minDate, format = '%d/%m/%Y'), " and ",strftime(endDate, format = '%d/%m/%Y'),", see model description for details about date range)."),
+                       min=as.Date(minDate), max=as.Date(maxdate),
+                       start =  minDate,
+                       end = strftime(endDate, format = '%Y-%m-%d'), format='dd/mm/yyyy'
+        ),
+        
+        
+        
         # buttons to picks which graphs/maps to see
         radioButtons("graph","Select:",
                      c("Map of detections"="hpai_map",
                        "Timeseries" = "hpai_timeseries",
                        "Model fit" = "country_modelfit",
                        "Forecasting" = "forecasting"),selected="forecasting"),
-
+        
         #if predictions are chose, here you select country
         conditionalPanel(
           condition = "input.graph == 'country_modelfit'",
           selectInput("predictions_options","Select country (only countries with > 10 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"))
         ),
-
+        
         # if forecasting is chosen, here you pick country
         conditionalPanel(
           condition = "input.graph == 'forecasting'",
@@ -115,7 +115,7 @@ shinyApp(
         HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),
         div(span("The purpose of this webpage is to show the predictions of the ENIGMA HPAI model. This model has been developed during research at the University of Copenhagen in "),span(a("the ENIGMA project, " , href="https://ivh.ku.dk/forskning/dyrevelfaerd-og-sygdomsbekaempelse/projektside/enigma/",target="_blank")), span("2021-2024. The ENIGMA project is based in "), span(a("the Avian Influenza Epidemiology Subgroup ", href="https://ivh.ku.dk/english/research/animal-welfare-and-disease-control/avian-influenza-epidemiology/",target="_blank")),span("at the University of Copenhagen and is part of the "),span(a("Danish Veterinary Contingency Consortium (DKVET) ", href="https://dkvet.dk/english/about/", target="_blank")),span("funded by the Danish Food and Veterinary Administration. R code and data used for the ENIGMA HPAI model is available at "), span(a("GitHub.", href="https://github.com/ckirkeby/ckirkeby.github.io/tree/main/ENIGMA2023", target="_blank"))),
         br(),
-
+        
         h5(HTML("<i>Disclaimer: The model and data reflects the state of knowledge available on the date of dispatch. The University of Copenhagen and DKVET cannot be held liable for any errors, inaccuracies or inconsistencies with regard to text and/or data contained therein. Therefore, the University of Copenhagen and DKVET accept no responsibility or liability arising out of, or in connection with the information provided.</i>")),
         br(),
         h5(HTML("The ENIGMA project is co-funded by the European Union through the European Partnership on Animal Health and Welfare")),
@@ -137,14 +137,14 @@ shinyApp(
       ),
       # Main panel for displaying outputs ----
       mainPanel(
-
+        
         # Output: Tabset w/ model description and model output panel ----
         tabsetPanel(
           tabPanel("Model output", downloadButton("downloadPlot", "Download"),plotOutput("graph",height = 500, width = 900), textOutput("info"), DTOutput("table")),
-
-
+          
+          
           tabPanel("Model description",
-
+                   
                    h3("Endemic-epidemic modelling of highly pathogenic avian influenza in Europe"),
                    p("The ENIGMA HPAI model results and graphs presented in this shiny app are based on the modelling framework described in Kjær et al. (2023). In this study, we utilized readily available data from the World Organization for Animal Health (WOAH-WAHIS)* on highly pathogenic avian influenza (HPAI) H5 detections in wild and domestic birds together with a time-series modelling framework (Meyer et al. 2014) to predict HPAI H5 detections within Europe. This framework decomposes time series data into endemic and epidemic components, where the epidemic component can take into account within-country transmission and between-country transmission as well as short-distance (from directly neighbouring countries) and long-distance (transmission follows a distance-decay algorithm) transmission."),
                    p("The WOAH-WAHIS data have revealed several shifts in the seasonality between 2016-2024, thus we only use recent data to reflect the newest transmission patterns. The results presented here are from a model fitted to data from the latest 1 1/4 year (to ensure enough data for model fitting) that includes long-range transmission, and seasonality in both the endemic and epidemic component (one seasonal wave for each component)."),
@@ -160,20 +160,20 @@ shinyApp(
                           background-color: #800000; width: 100%; color:white;font-size:85%;"),
                      h5(HTML("<b>Disclaimer and caption</b>"), style="text-align:left;background-color: #ffffff;width: 50%;font-size:85%;"),
                      p(HTML("<i>Data extracted by Lene Jung Kjær and Carsten Kirkeby, University of Copenhagen. WOAH bears no responsibility for the integrity or accuracy of the data contained herein, but not limited to, any deletion, manipulation, or reformatting of data that may have occurred beyond its control. For some events, incorrect data have recently been detected in the figures containing the quantitative information of the outbreaks. WOAH is currently undertaking considerable efforts to solve these issues at the source and provide a dataset that is fully consistent with that reported by countries. The remaining fields of the table are not impacted by these issues. We will keep our users informed as the situation develops.</i>"),style="text-align:justify;background-color: #ffffff;width: 100%;font-size:85%;"))
-
+                   
           )
-
+          
         )
       )
     )
   ),
-
-
+  
+  
   # Define server
   server <- function(input, output) {
     ## REACTIVE FUNCTIONS ##
     # reactive functions take user inputs fx. date or graph type and produce outputs or variables based on this
-
+    
     # many of the below functions just create timevariables out of the dates chosen. These variables are used for plotting
     startWeek <- reactive({
       startweekno<- isoweek(input$dateRange[1])
@@ -181,23 +181,23 @@ shinyApp(
       if(startyearno==2023 && startweekno==53){
         if(input$dateRange[1] < '2024-01-01'){
           startweekno<-52
-
+          
         }
         else if(input$dateRange[1] >='2024-01-01'){
           startweekno<- 1
         }
-
+        
       }
       return(as.numeric(startweekno))
     })
-
+    
     startYear <- reactive({
       startyearno<-isoyear(input$dateRange[1])
       startweekno <- isoweek(input$dateRange[1])
       if(startyearno==2023 && startweekno==53){
         if(input$dateRange[1] < '2024-01-01'){
           startyearno<- 2023
-
+          
         }
         else if(input$dateRange[1] >='2024-01-01'){
           startyearno <- 2024
@@ -205,30 +205,30 @@ shinyApp(
       }
       return(as.numeric(startyearno))
     })
-
+    
     endWeek <- reactive({
       endweekno <-isoweek(input$dateRange[2])
       endyearno <- isoyear(input$dateRange[2])
       if(endyearno==2023 && endweekno==53){
         if(input$dateRange[2] < '2024-01-01'){
           endweekno<-52
-
+          
         }
         else if(input$dateRange[2] >='2024-01-01'){
           endweekno<- 1
         }
-
+        
       }
       return(as.numeric(endweekno))
     })
-
+    
     endYear <- reactive({
       endyearno<-isoyear(input$dateRange[2])
       endweekno <-isoweek(input$dateRange[2])
       if(endyearno==2023 && endweekno==53){
         if(input$dateRange[2] < '2024-01-01'){
           endyearno<- 2023
-
+          
         }
         else if(input$dateRange[2] >='2024-01-01'){
           endyearno <- 2024
@@ -236,30 +236,30 @@ shinyApp(
       }
       return(as.numeric(endyearno))
     })
-
+    
     startYearWeek <- reactive ({
       yearweek(paste0(startYear(), ' ', paste0('W',startWeek())))
     })
-   
+    
     endYearWeek <-  reactive({
       yearweek(paste0(endYear(), ' ', paste0('W',endWeek())))
     })
-
+    
     start <- reactive ({
       as.numeric(floor(difftime(input$dateRange[1], minDate,units="weeks")+1))
     })
-
+    
     end <-  reactive({
       as.numeric(floor(difftime(input$dateRange[2], minDate,units="weeks")+1))
     })
-
+    
     #now we calculate number of outbreaks for each country for the time period chosen for plotting
     europe_mapData1 <-reactive ({
       europe_data_weekly %>%
         filter(yearweek>=startYearWeek() & yearweek <=endYearWeek()) %>%
         group_by(ADM0_A3) %>% summarise(no_outbreaks = sum(no_outbreaks, na.rm=T))
     })
-
+    
     #Merge with shapefiles of Europe for plotting
     europe_mapData<- reactive ({
       t1 <- merge(europeanCountries, europe_mapData1(),by="ADM0_A3")
@@ -294,7 +294,7 @@ shinyApp(
         theme(legend.position = c(0.91, 0.98),
               legend.justification=c(0.5, 1),legend.title=element_text(size=9),plot.margin=unit(c(1,-0.5,1,1), "cm"))+
         labs(fill=expression(paste("HPAI total")))
-
+      
       myMap2 <- ggplot() +
         geom_sf(data= europe_mapData(),aes(fill = outbreaksArea),color="black")+
         theme_void()+
@@ -302,12 +302,12 @@ shinyApp(
         theme(legend.position = c(0.95, 0.99),
               legend.justification=c(0.5, 1),legend.title=element_text(size=9),plot.margin=unit(c(1,1,1,-0.5), "cm"))+
         labs(fill=expression(paste("HPAI/10,000 km"^"2")))
-
+      
       myMap3 <- ggplot(europe_mapData())+
         geom_sf(fill="seashell", show.legend=FALSE)+
         geom_sf(europe_data_sf(),mapping=aes(fill="darkred",alpha=0.5),col="darkred", alpha=0.5,size=0.3,show.legend=FALSE)+
         theme_void()
-
+      
       print(ggarrange(myMap1,myMap2,myMap3, ncol=3))
       recordPlot()
     })
@@ -324,12 +324,12 @@ shinyApp(
                     buttons = list(list(extend = "csv", text = "Download csv", filename = paste0('HPAIdetections_',strftime(input$dateRange[1], format='%d/%m/%Y'), '_to_', strftime(input$dateRange[2], format='%d/%m/%Y')),
                                         exportOptions = list(
                                           modifier = list(page = "all"))))))
-
+      
       return(myTable)
-
+      
     })
-
-
+    
+    
     # time series
     hpai_timeseries <- reactive({
       par(mar = c(7, 5, 4.1, 2.1))
@@ -337,14 +337,14 @@ shinyApp(
       print(myPlot)
       recordPlot()
     })
-
+    
     # model fit, summed all countries
     allCountry_modelfit<- reactive({
       myPlot <-plot(final_model, type = "fitted", total = TRUE,hide0s = TRUE, ylab="No. detected cases", xlab="Years and quarters",ylim=c(0,(max(rowSums(observed(final_model$stsObj[start():end(), ]), na.rm=T)))+50),par.settings = list(mar = c(7, 5, 4.1, 2.1)), xaxis=list(epochsAsDate=TRUE),start=c(startYear(),startWeek()), end=c(endYear(),endWeek()+0.1),col=c('brown2','#4292C6','orange'),names="Summed all countries", legend.args=list(x="topright", inset=c(-0.1,0.003), horiz=T,legend = c("Epidemic component,between-country","Epidemic component,within-country", "Endemic"),col=c('orange','#4292C6','brown2')))
       print(myPlot)
       recordPlot()
     })
-
+    
     # model fit, individual countries
     country_modelfit <- reactive({
       unit<-  which(districts2plot2==input$predictions_options)
@@ -361,7 +361,7 @@ shinyApp(
       print(myPlot)
       recordPlot()
     })
-
+    
     # forecasting, individual countries
     country_forecasting <- reactive({
       unit<-  which(districts2plot2==input$forecasting_options)
@@ -372,8 +372,8 @@ shinyApp(
       print(myPlot)
       recordPlot()
     })
-
-
+    
+    
     #functions to get plot names dependent on user input - this will be used when downloading files to create file name
     getPlotName <- reactive({
       if(input$graph=="country_modelfit"){
@@ -408,7 +408,7 @@ shinyApp(
       } else
         if(input$graph=="hpai_timeseries") {
           paste0("Number of reported highly pathogenic avian influenza (H5 subtype) detections shown over time between ",strftime(input$dateRange[1], format= '%d/%m/%Y'), " and ", strftime(input$dateRange[2],format='%d/%m/%Y'), ", summed over 37 European countries.")
-
+          
         } else
           if(input$graph=="country_modelfit"){
             if(input$predictions_options== "Summed all countries"){
@@ -433,10 +433,10 @@ shinyApp(
         hpai_table()
       }
     })
-
+    
     ## DOWNLOAD GRAPHS/MAPS ###
     output$downloadPlot <- downloadHandler(
-
+      
       filename = function() {
         if(input$graph=="forecasting" & input$forecasting_options!= "Summed all countries"){
           paste0(substr(getPlotName(),1,nchar(getPlotName())-2), "_", input$forecasting_options,"_", Sys.Date(),".png")
@@ -449,10 +449,10 @@ shinyApp(
         makeFootnote(paste0("ENIGMA model results based on model from Kjær et al. (2023), using WOAH-WAHIS data from ", strftime(input$dateRange[1],format='%d/%m/%Y')," to ",strftime(input$dateRange[2],format='%d/%m/%Y'), ". Downloaded on ", format(Sys.time(), "%d/%m/%Y")))
         dev.off()
       }
-
+      
     )
   }
-
+  
 )
 # Create Shiny app ----
 shinyApp(ui, server)

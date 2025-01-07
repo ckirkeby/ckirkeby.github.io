@@ -47,6 +47,7 @@ filepaths <- c(
 filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
 
 setwd(filepath)
+
 # Find the file:
 ff <- list.files(pattern="infur")
 # Define filename:
@@ -75,13 +76,13 @@ source('./src/ENIGMA_DataPrep.R')
 
 endWeek <-as.numeric(isoweek(end_yearweek))
 endYear <-as.numeric(isoyear(end_yearweek))
-
+start_yearweek <- end_yearweek-(52+13)
 
 ### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
 
 ### Only data ca 1.5 year back from current date ###
 #subset data
-subset_start <- dim(AI_weekly)[1]-3*52+endWeek+1-13
+subset_start <- dim(AI_weekly)[1]-3*52+isoweek(start_yearweek)
 subset_end <- dim(AI_weekly)[1] # week 52 in 2024
 AI_weekly1 <-  AI_weekly[subset_start:subset_end,,drop=FALSE]
 AI_wet1 <-  AI_wet[subset_start:subset_end,,drop=FALSE]
@@ -89,8 +90,6 @@ AI_coast1 <-  AI_coast[subset_start:subset_end,,drop=FALSE]
 #area fraction of summed countries
 area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_area[subset_start:subset_end,,drop=FALSE])
 
-
-start_yearweek <- end_yearweek-(52+13)
 
 start_W <- isoweek(start_yearweek)
 start_Y <- isoyear(start_yearweek)

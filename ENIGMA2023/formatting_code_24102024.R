@@ -46,20 +46,6 @@ filepaths <- c(
 )
 filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
 
-# Set the  dir to whatever is available:
-if(file.exists("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"))
-{
-  filepath <- "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"
-}
-if(file.exists("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
-{
-  filepath <- "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
-}
-if(file.exists("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
-{
-  filepath <- "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
-}
-
 setwd(filepath)
 # Find the file:
 ff <- list.files(pattern="infur")
@@ -180,6 +166,9 @@ file.copy(file.path(getwd(), "for_ai.car"), paste0(filepath, "for_ai.car"), over
 
 # Clean up:
 rm(ai_data)
+
+# Dataset used:
+filename
 
 ############# 2) Push to git ###############
 

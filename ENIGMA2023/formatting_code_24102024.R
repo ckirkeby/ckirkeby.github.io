@@ -40,19 +40,12 @@ library(qs)
 
 ####### 1) Download seneste infur fil til denne folder: ############
 
-# Set the  dir to whatever is available:
-if(file.exists("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"))
-{
-  filepath <- "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"
-}
-# if(file.exists("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
-# {
-#   filepath <- "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
-# }
-if(file.exists("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
-{
-  filepath <- "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
-}
+filepaths <- c(
+  "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/",
+  "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
+)
+filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
+
 
 setwd(filepath)
 # Find the file:

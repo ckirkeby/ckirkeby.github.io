@@ -46,6 +46,19 @@ filepaths <- c(
 )
 filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
 
+# Set the  dir to whatever is available:
+if(file.exists("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"))
+{
+  filepath <- "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/"
+}
+if(file.exists("C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
+{
+  filepath <- "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
+}
+if(file.exists("C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"))
+{
+  filepath <- "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
+}
 
 setwd(filepath)
 # Find the file:
@@ -88,7 +101,7 @@ endYear <-as.numeric(strftime(endDate, format = '%Y'))
 
 ### Only data ca 1 year back from current date ###
 #subset data
-subset_start <- dim(AI_weekly)[1]-2*52+endWeek+1-13
+subset_start <- dim(AI_weekly)[1]-3*52+endWeek+1-13
 subset_end <- dim(AI_weekly)[1] # week 52 in 2024
 AI_weekly1 <-  AI_weekly[subset_start:subset_end,,drop=FALSE]
 AI_wet1 <-  AI_wet[subset_start:subset_end,,drop=FALSE]

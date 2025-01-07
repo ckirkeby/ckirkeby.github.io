@@ -94,7 +94,7 @@ colnames(europe_data_weekly)<- c("ADM0_A3", "Week", "Year","no_outbreaks")
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
   group_by(ADM0_A3) %>%
-  complete(Year = 2016:2024, fill = list(Week=1, no_outbreaks = 0))
+  complete(Year = 2016:2025, fill = list(Week=1, no_outbreaks = 0))
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%

@@ -70,22 +70,16 @@ source('./src/ENIGMA_custom_functions.R')
 source('./src/ENIGMA_DataPrep.R') 
 
 
-### NOW RUN MODEL BASED ON THR LATEST DATA, BUT STARTING IN WEEK 39 IN  2021
+### NOW RUN MODEL BASED ON THR LATEST DATA, BUT STARTING 1 1/4 year from the latest data
 
-# get week and year for the last date of data, to create a yearweek variable to be used later in the shiny app
-europe_data_weekly$week <- paste0('W', europe_data_weekly$Week)
-europe_data_weekly$yearweek <- yearweek(paste0(europe_data_weekly$Year, ' ', europe_data_weekly$week))
 
-europe_data$week <- paste0('W', europe_data$isoweek)
-europe_data$yearweek <- yearweek(paste0(europe_data$isoyear, ' ', europe_data$week))
-
-endWeek <-as.numeric(strftime(endDate, format = '%V'))
-endYear <-as.numeric(strftime(endDate, format = '%Y'))
+endWeek <-as.numeric(isoweek(end_yearweek))
+endYear <-as.numeric(isoyear(end_yearweek))
 
 
 ### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
 
-### Only data ca 1 year back from current date ###
+### Only data ca 1.5 year back from current date ###
 #subset data
 subset_start <- dim(AI_weekly)[1]-3*52+endWeek+1-13
 subset_end <- dim(AI_weekly)[1] # week 52 in 2024
@@ -95,8 +89,11 @@ AI_coast1 <-  AI_coast[subset_start:subset_end,,drop=FALSE]
 #area fraction of summed countries
 area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_area[subset_start:subset_end,,drop=FALSE])
 
-start_W <- endWeek+1-13
-start_Y <- endYear-1
+
+start_yearweek <- end_yearweek-(52+13)
+
+start_W <- isoweek(start_yearweek)
+start_Y <- isoyear(start_yearweek)
 
 # set min and max date of data for shiny app
 minDate <- as.Date(make_yearweek(year  = start_Y, week = start_W, 
@@ -143,6 +140,7 @@ setwd(paste0(filepath,"tmp"))
 
 qs::qsave(list(ai_data=ai_data, 
                save_date=save_date, 
+               end_yearWeek=end_yearWeek,
                filename=filename,
                endDate=endDate,
                updateDate=updateDate,

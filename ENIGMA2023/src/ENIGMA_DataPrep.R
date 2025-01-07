@@ -24,6 +24,7 @@ europeanCountries$area_sqkm <- as.numeric(st_area(europeanCountries)) / 1000000
 #download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
 #qs::qload(tt)
 updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
+
 #file.remove(tt)
 
 # the code above downloaded the data set called ai_data, here we select only HPAI and only select some of the variables in the WOAH-WAHIS data, as we do not need them all
@@ -84,42 +85,50 @@ for (i in 1:nrow(europe_data)){
   }
 }
 
+europe_data$yearWeek <- yearweek(paste0(europe_data$isoyear, ' ', paste0('W',europe_data$isoweek)))
+
+
 ## now aggregate per week per year per country
 europe_data_weekly <- europe_data  %>%
-  group_by(iso_code, isoweek,isoyear) %>% summarise(no_outbreaks = sum(cases))
+  group_by(iso_code, europe_data$yearWeek, europe_data$isoyear, europe_data$isoweek) %>% summarise(no_outbreaks = sum(cases))
 
-colnames(europe_data_weekly)<- c("ADM0_A3", "Week", "Year","no_outbreaks")
 
+colnames(europe_data_weekly)<- c("ADM0_A3", "yearWeek","Year", "Week", "no_outbreaks")
+max_year <- max(europe_data_weekly$Year)
 
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
   group_by(ADM0_A3) %>%
-  complete(Year = 2016:2025, fill = list(Week=1, no_outbreaks = 0))
+  complete(Year = 2016:max_year, fill = list(Week=1,no_outbreaks = 0))
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%
    group_by(ADM0_A3, Year) %>%
-  complete(Week = 1:52, fill = list(no_outbreaks = 0))
+  complete(Week = 1:52, fill = list(no_outbreaks = 0)) 
+
+europe_data_weekly$yearWeek <-yearweek(paste0(europe_data_weekly$Year, ' ', paste0('W', europe_data_weekly$Week)))
 
 #set rest of final year to NA after last week with detection reports
-endWeek <-as.numeric(strftime(endDate, format = '%V'))
-endYear <-as.numeric(strftime(endDate, format = '%Y'))
+end_yearweek <- yearweek(endDate)
+update_yearweek <- yearweek(strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%Y-%m-%d'))
 
-europe_data_weekly$no_outbreaks[europe_data_weekly$Year==endYear & europe_data_weekly$Week>endWeek] <- NA
+europe_data_weekly$no_outbreaks[europe_data_weekly$yearWeek>end_yearweek] <- NA
 
-europe_data_weekly$no_outbreaks[europe_data_weekly$Year>endYear ] <- NA
-
-updateWeek <- as.numeric(strftime(updateDate, format = '%V'))
+updateWeek <- isoweek(strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%Y-%m-%d'))
+endYear <- as.numeric(isoyear(endDate))
 endWeek <- as.numeric(strftime(endDate, format = '%V'))
 diff <- updateWeek-endWeek
 
-# check if endWeek in data is much earlier than updateWeek (meaning that we have actual weeks with zero detections) and if so check if 2 consecutive weeks within that time frame is NA - if so set the first week to zero
+
+# check if end_yearWeek in data is much earlier than updateWeek (meaning that we have actual weeks with zero detections) and if so check if 2 consecutive weeks within that time frame is NA - if so set the first week to zero
 if(diff>0) {
   for(i in 1:diff) {
-    ifelse((is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]) & is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==(i+endWeek+1) & europe_data_weekly$Year==endYear])),    (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear] <-replicate(37,0)), (europe_data_weekly$no_outbreaks[europe_data_weekly$Week ==i+endWeek &europe_data_weekly$Year==endYear]=NA))
+    ifelse((is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$yearWeek ==i+end_yearweek]) & is.na(europe_data_weekly$no_outbreaks[europe_data_weekly$yearWeek ==(i+end_yearweek+1)])),    (europe_data_weekly$no_outbreaks[europe_data_weekly$yearWeek ==i+end_yearweek] <-replicate(37,0)), (europe_data_weekly$no_outbreaks[europe_data_weekly$yearWeek ==i+end_yearweek]=NA))
   }
 }
 endWeek<- updateWeek
+end_yearWeek <- max(europe_data_weekly[is.na(europe_data_weekly$no_outbreaks)==F,]$yearWeek)
+
 
 ### READ IN COVARIATES ###
 ## read in file on coastal length and area of wetland
@@ -145,7 +154,7 @@ europe_data_weekly <- merge(europe_data_weekly, area_data, by="ADM0_A3")
 
 #select only needed columns
 europe_data_weekly <-europe_data_weekly %>%
-  dplyr::select(ADM0_A3, Year, Week,no_outbreaks, Wet_km, Coast_km, area_sqkm )
+  dplyr::select(ADM0_A3, Year, Week,yearWeek,no_outbreaks, Wet_km, Coast_km, area_sqkm)
 
 # CREATE DATA, NEIGHBORHOOD AND COVARIATE MATRICES ###
 #first read in shapefile where water is added as polygons to account for countries with water between them still being connected in a bird's perspective

@@ -76,13 +76,13 @@ source('./src/ENIGMA_DataPrep.R')
 
 endWeek <-as.numeric(isoweek(end_yearweek))
 endYear <-as.numeric(isoyear(end_yearweek))
-start_yearweek <- end_yearweek-(52+13)
+start_yearweek <- end_yearweek-(52+13) # only go 1 1/4 year back (52+13)
 
 ### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
 
 ### Only data ca 1.5 year back from current date ###
 #subset data
-subset_start <- dim(AI_weekly)[1]-3*52+isoweek(start_yearweek)
+subset_start <- dim(AI_weekly)[1]-(52-endWeek)-(52+13)
 subset_end <- dim(AI_weekly)[1] # week 52 in 2024
 AI_weekly1 <-  AI_weekly[subset_start:subset_end,,drop=FALSE]
 AI_wet1 <-  AI_wet[subset_start:subset_end,,drop=FALSE]

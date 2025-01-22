@@ -104,7 +104,7 @@ shinyApp(
         #if predictions are chose, here you select country
         conditionalPanel(
           condition = "input.graph == 'country_modelfit'",
-          selectInput("predictions_options","Select country (only countries with > 10 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"), selectize = TRUE)
+          selectInput("predictions_options","Select country (only countries with > 10 detections total are shown)", choices=districts2plot2, selected=("Summed all countries"), selectize = FALSE)
         ),
 
         # if forecasting is chosen, here you pick country

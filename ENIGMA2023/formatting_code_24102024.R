@@ -42,7 +42,8 @@ library(qs)
 
 filepaths <- c(
   "C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/",
-  "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
+  "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/",
+  "C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
 )
 filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
 
@@ -128,7 +129,6 @@ final_model <-hhh4(stsObj = AI_sts,control = final_model_base)
 
 
 ################################################################################
-
 
 # Save the date:
 save_date <- Sys.Date()

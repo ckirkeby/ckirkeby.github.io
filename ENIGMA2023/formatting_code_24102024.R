@@ -11,7 +11,6 @@
 # 4) The app should automatically take the new file as input, and be updated.
 
 
-
 ##############################################################################################
 # This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.   
 

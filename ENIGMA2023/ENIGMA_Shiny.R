@@ -257,9 +257,11 @@ shinyApp(
     #now we calculate number of outbreaks for each country for the time period chosen for plotting
     europe_mapData1 <-reactive ({
       europe_data_weekly %>%
-        filter(yearweek>=startYearWeek() & yearweek <=endYearWeek()) %>%
+        filter(yearWeek>=startYearWeek() & yearWeek <=endYearWeek()) %>%
         group_by(ADM0_A3) %>% summarise(no_outbreaks = sum(no_outbreaks, na.rm=T))
     })
+
+
 
     #Merge with shapefiles of Europe for plotting
     europe_mapData<- reactive ({
@@ -270,7 +272,7 @@ shinyApp(
     europe_data_sf <-reactive({
       ##to use in shiny graphs
       europe_data_sf <- europe_data %>%
-        filter(yearweek>=startYearWeek() & yearweek <=endYearWeek()) %>%
+        filter(yearWeek>=startYearWeek() & yearWeek <=endYearWeek()) %>%
         mutate(Longitude=as.numeric(Longitude), Latitude=as.numeric(Latitude) ) %>%
         filter(Latitude <74.0) %>%
         st_as_sf(coords=c("Longitude","Latitude"),crs="EPSG:4326")

@@ -48,8 +48,8 @@ selectBestModel <- function(model_predictions, metrics = c("rps", "logs"), verbo
                                       colMeans(model_predictions_scores[[models_to_compare[2]]])[,i], plot = plot)
     best_models[[metrics[i]]] = models_to_compare[1]
   }
-  #write results to file
-write.csv(cbind(model_predictions_mean_scores1, pvals_for_table), paste0(deparse(substitute(model_predictions)),"_",data_name, "_results.csv"))
+#   #write results to file
+# write.csv(cbind(model_predictions_mean_scores1, pvals_for_table), paste0(deparse(substitute(model_predictions)),"_",data_name, "_results.csv"))
   
   if (verbose == TRUE){
     options(digits = 5)

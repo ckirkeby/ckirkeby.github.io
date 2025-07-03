@@ -66,7 +66,7 @@ europe_data <-europe_data %>%
 
 
 # check if any observations with week 53 ?
-europe_data[which(europe_data$isoweek == 53), ]
+#europe_data[which(europe_data$isoweek == 53), ]
 
 # In this data set, there are observations within week 53 from 2020/2021 and one from  January 2016. As the surveillance package needs a matrix of countries and week numbers, we cannot have week 53 in some years and not others. We also cannot create a week 53 for the remaining years and set it to zero observations as this week does not exist for those years. Instead, we force dates in week 53 to be either week 52 in 2020 (if in December 2020), week 1 in 2021 (if in January 2021) or week 1 in 2016.
 
@@ -159,6 +159,7 @@ europe_data_weekly <-europe_data_weekly %>%
 # CREATE DATA, NEIGHBORHOOD AND COVARIATE MATRICES ###
 #first read in shapefile where water is added as polygons to account for countries with water between them still being connected in a bird's perspective
 europeanCountries_water = st_read('./data/GIS/Europe_shapefiles_water.shp')
+
 
 #now calculate neighborhood (matrix) and set column and row names
 europe_adjmat <-nbOrder(poly2adjmat(europeanCountries_water,zero.policy = TRUE), maxlag = Inf)

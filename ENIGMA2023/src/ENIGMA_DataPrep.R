@@ -90,7 +90,8 @@ europe_data$yearWeek <- yearweek(paste0(europe_data$isoyear, ' ', paste0('W',eur
 
 ## now aggregate per week per year per country
 europe_data_weekly <- europe_data  %>%
-  group_by(iso_code, europe_data$yearWeek, europe_data$isoyear, europe_data$isoweek) %>% summarise(no_outbreaks = sum(cases))
+  dplyr::group_by(iso_code, europe_data$yearWeek, europe_data$isoyear, europe_data$isoweek) %>% 
+  dplyr::summarise(no_outbreaks = sum(cases))
 
 
 colnames(europe_data_weekly)<- c("ADM0_A3", "yearWeek","Year", "Week", "no_outbreaks")

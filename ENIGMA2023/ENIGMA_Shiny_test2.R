@@ -35,6 +35,7 @@ yw_week <- function(yw) {
   lubridate::isoweek(as.Date(yw))
 }
 
+
 ## ---- LOAD NEWEST WOAH/WAHIS / MODEL OBJECTS ----
 tt <- tempfile()
 download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode = "wb")
@@ -226,6 +227,21 @@ server <- function(input, output, session) {
     as.numeric(floor(difftime(input$dateRange[2], as.Date(minDate), units = "weeks") + 1))
   })
   
+  last_obs <- reactive({
+    max(which(apply(observed(final_model$stsObj), 1, function(x) any(!is.na(x)))))
+  })
+  
+  with_trimmed_sts <- function(model, expr) {
+    old_sts <- model$stsObj
+    on.exit({ model$stsObj <<- old_sts }, add = TRUE)
+    
+    last_obs <- max(which(apply(observed(old_sts), 1, function(x) any(!is.na(x)))))
+    model$stsObj <<- old_sts[1:last_obs, ]
+    
+    force(expr)
+  }
+  
+  
   ## Ensure user-selected indices are valid for stsObj
   observeEvent(input$dateRange, {
     nT <- nrow(final_model$stsObj)
@@ -240,6 +256,7 @@ server <- function(input, output, session) {
       )
     }
   }, ignoreInit = TRUE)
+ 
   
   ## MAP DATA
   europe_mapData1 <- reactive({
@@ -263,7 +280,10 @@ server <- function(input, output, session) {
       st_as_sf(coords = c("Longitude", "Latitude"), crs = "EPSG:4326")
   })
   
-  ## SIMULATION-BASED FORECASTING (SAFE AT YEAR ROLLOVER AND END OF SERIES)
+  sts_plot <- reactive({
+    final_model$stsObj[1:last_obs(), ]
+  })
+  
   ## simulations 3 weeks ahead of the last week of the time period chosen.
   sim <- reactive({
     startSim <-end()-1
@@ -273,6 +293,7 @@ server <- function(input, output, session) {
                           nsim = 500, seed = 1, subset =(startSim+1):endSim,y.start = y.start)
     return(AI_stsSim)
   })
+  
   
   ## ---- PLOTS ----
   
@@ -303,8 +324,15 @@ server <- function(input, output, session) {
     
     myMap3 <- ggplot(europe_mapData()) +
       geom_sf(fill = "seashell", show.legend = FALSE) +
-      geom_sf(europe_data_sf(), col = "darkred", alpha = 0.5, size = 0.3, show.legend = FALSE) +
+      geom_sf(
+        data = europe_data_sf(),
+        col = "darkred",
+        alpha = 0.5,
+        size = 0.3,
+        show.legend = FALSE
+      ) +
       theme_void()
+    
     
     print(ggarrange(myMap1, myMap2, myMap3, ncol = 3))
     recordPlot()
@@ -357,16 +385,17 @@ server <- function(input, output, session) {
   allCountry_modelfit <- reactive({
     myPlot <- plot(
       final_model,
+      stsObj = sts_plot(), 
       type = "fitted",
       total = TRUE,
-      hide0s = TRUE,
+      hide0s = FALSE,
       ylab = "No. detected cases",
       xlab = "Years and quarters",
-      ylim = c(0, (max(rowSums(observed(final_model$stsObj[start():end(), ]), na.rm = TRUE)) + 50)),
+      ylim = c(0,max(rowSums(observed(final_model$stsObj[start():min(end(), last_obs()), ]), na.rm = TRUE)) + 50),
       par.settings = list(mar = c(7, 5, 4.1, 2.1)),
       xaxis = list(epochsAsDate = TRUE),
-      start = c(yw_year(startYW()), yw_week(startYW())),
-      end   = c(yw_year(endYW()),   yw_week(endYW())),
+      start = start(),
+      end   = min(end(), last_obs()),
       col = c("brown2", "#4292C6", "orange"),
       names = "Summed all countries",
       legend.args = list(
@@ -385,20 +414,18 @@ server <- function(input, output, session) {
     unit <- which(districts2plot2 == input$predictions_options)
     myPlot <- plot(
       final_model,
+      stsObj = sts_plot(), 
       type = "fitted",
       units = districts2plot[unit],
-      hide0s = TRUE,
+      hide0s =FALSE,
       names = districts2plot2[unit],
       ylab = "No. deteced cases",
       xlab = "Years and quarters",
-      ylim = c(
-        0,
-        (max(observed(final_model$stsObj)[start():end(), districts2plot[unit]], na.rm = TRUE) + 7)
-      ),
+      ylim = c(0,max(observed(final_model$stsObj)[start():min(end(), last_obs()),districts2plot[unit]],na.rm = TRUE) + 7),
       xaxis = list(epochsAsDate = TRUE),
       par.settings = list(mar = c(7, 5, 4.1, 2.1)),
-      start = c(yw_year(startYW()), yw_week(startYW())),
-      end   = c(yw_year(endYW()),   yw_week(endYW())),
+      start = start(),
+      end   = min(end(), last_obs()),
       legend.args = list(
         x = "topright",
         inset = c(-0.1, 0.003),

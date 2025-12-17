@@ -82,8 +82,8 @@ start_yearweek <- end_yearweek-(52+13) # only go 1 1/4 year back (52+13)
 
 ### Only data ca 1.5 year back from current date ###
 #subset data
-subset_start <- dim(AI_weekly)[1]-(52-endWeek)-(52+13)
-subset_end <- dim(AI_weekly)[1] # week 52 in 2024
+subset_start <- dim(AI_weekly)[1]-(52-endWeek)-(52+13)-52
+subset_end <- dim(AI_weekly)[1] -52 + (52-endWeek)
 AI_weekly1 <-  AI_weekly[subset_start:subset_end,,drop=FALSE]
 AI_wet1 <-  AI_wet[subset_start:subset_end,,drop=FALSE]
 AI_coast1 <-  AI_coast[subset_start:subset_end,,drop=FALSE]

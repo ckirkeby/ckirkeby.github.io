@@ -280,8 +280,8 @@ shinyApp(
     })
     ## simulations 3 weeks ahead of the last week of the time period chosen.
     sim <- reactive({
-      startSim <-end()-1
-      endSim<-startSim+4
+      startSim <- min(end() - 1)
+      endSim   <- min(startSim + 4)
       y.start <- observed(AI_sts)[startSim, ]
       AI_stsSim <- simulate(final_model,
                             nsim = 500, seed = 1, subset =(startSim+1):endSim,y.start = y.start)

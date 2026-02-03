@@ -29,14 +29,14 @@ updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format
 
 # the code above downloaded the data set called ai_data, here we select only HPAI and only select some of the variables in the WOAH-WAHIS data, as we do not need them all
 europe_data <-ai_data %>% 
-  filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)")) %>% 
+  filter(disease_eng %in% c("High pathogenicity avian influenza viruses (poultry) (Inf. with)", "Influenza A viruses of high pathogenicity (Inf. with) (non-poultry including wild birds) (2017-)", "High pathogenicity avian influenza viruses (Inf. with) (poultry)")) %>% 
   dplyr::select(disease_eng,iso_code, sero_sub_genotype_eng,Outbreak_start_date,Species,cases, Longitude, Latitude )
 
 # CLEAN AND PREPARE DATA---------------------------------
 
 #make sure that outbreak start date is in date format
 europe_data$Outbreak_start_date <- as.Date(europe_data$Outbreak_start_date, tryFormats = c("%Y-%m-%d", "%Y/%m/%d"))
-names(europe_data)
+#names(europe_data)
 
 
 #filter out other species than birds using the bird_names_20220517.csv file
@@ -90,7 +90,7 @@ europe_data$yearWeek <- yearweek(paste0(europe_data$isoyear, ' ', paste0('W',eur
 
 ## now aggregate per week per year per country
 europe_data_weekly <- europe_data  %>%
-  dplyr::group_by(iso_code, europe_data$yearWeek, europe_data$isoyear, europe_data$isoweek) %>% 
+  dplyr::group_by(iso_code, yearWeek, isoyear, isoweek) %>% 
   dplyr::summarise(no_outbreaks = sum(cases))
 
 
@@ -100,7 +100,7 @@ max_year <- max(europe_data_weekly$Year)
 #this methods fill in missing years for each country, by adding week 1 of the missing year (zero number of detections)
 europe_data_weekly <-europe_data_weekly %>%
   group_by(ADM0_A3) %>%
-  complete(Year = 2016:max_year+1, fill = list(Week=1,no_outbreaks = 0))
+  complete(Year = 2016:(max_year+1), fill = list(Week=1,no_outbreaks = 0))
 
 #this method then add missing weeks to the data set and set number of outbreaks for the missing weeks to zero
 europe_data_weekly <-europe_data_weekly %>%
@@ -181,10 +181,13 @@ europeanCountries.sub <- as(europeanCountries.sub, 'Spatial')
 adjmat_order <- colnames(europe_adjmat)
 keyDF <- data.frame(key=adjmat_order,weight=1:length(adjmat_order))
 merged <- merge(europe_data_weekly,keyDF,by.x='ADM0_A3',by.y='key',all.x=T,all.y=F)
+names(merged)
+
 res <- merged[order(merged$weight, merged$Year,merged$Week),c('ADM0_A3','Year', "Week", "no_outbreaks")]
 
 #create data matrix to be used in hhh4 model in HPAI_hhh4_master.R
-AI_weekly <-res %>%  pivot_wider(
+AI_weekly <-res %>%  
+  pivot_wider(
   names_from = ADM0_A3,
   values_from = no_outbreaks,
   id_cols = c(Year, Week)) %>%

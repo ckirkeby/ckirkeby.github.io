@@ -35,12 +35,12 @@ library(readxl)
 ### READ IN newest OIE DATA ###
 ##link to where files are - the below code will pick the newest file in the folder
 
-# set_trust_promises(TRUE)
-# tt <- tempfile()
-# download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
-# qs::qload(tt)
+set_trust_promises(TRUE)
+tt <- tempfile()
+download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode="wb")
+qs::qload(tt)
 updateDate <-strftime(as.Date(substring(filename, 7,14), format='%Y%m%d'),format = '%d/%m/%Y')
-#file.remove(tt)
+file.remove(tt)
 #endDate <- Sys.Date()
 #maxdate<- Sys.Date()
 

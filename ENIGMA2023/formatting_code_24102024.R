@@ -49,6 +49,7 @@ filepaths <- c(
 )
 filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
 
+dir(filepath)
 setwd(filepath)
 
 # Find the file:

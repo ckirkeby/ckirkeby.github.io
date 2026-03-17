@@ -37,8 +37,6 @@ library(spdep)
 library(fanplot)
 library(qs)
 
-
-
 ####### 1) Download seneste infur fil til denne folder: ############
 
 filepaths <- c(
@@ -46,6 +44,7 @@ filepaths <- c(
   "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/",
   #"C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/",
   "C:/Users/hzs315/Documents/GitHub/ckirkeby.github.io/ENIGMA2023"
+ 
 )
 filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
 

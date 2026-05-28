@@ -784,7 +784,7 @@ server <- function(input, output, session) {
         component = factor(
           component,
           levels = c("between", "within", "endemic"),
-          labels = c("Epidemic between", "Epidemic within", "Endemic")
+          labels = c("Epidemic between component", "Epidemic within component", "Endemic component")
         )
       )
 
@@ -836,11 +836,11 @@ server <- function(input, output, session) {
         stackgroup = "fit",
         line = list(width = 0.5, color = "brown2"),
         fillcolor = "rgba(238, 59, 59, 0.85)",
-        name = "Endemic",
+        name = "Endemic component",
         customdata = ~round(endemic, 1),
         hovertemplate = paste(
           "Date: %{x|%d %b %Y}",
-          "<br>Endemic: %{customdata}",
+          "<br>Endemic component: %{customdata}",
           "<extra></extra>"
         )
       ) %>%
@@ -853,11 +853,11 @@ server <- function(input, output, session) {
         stackgroup = "fit",
         line = list(width = 0.5, color = "#4292C6"),
         fillcolor = "rgba(66, 146, 198, 0.85)",
-        name = "Epidemic within",
+        name = "Epidemic within component",
         customdata = ~round(within, 1),
         hovertemplate = paste(
           "Date: %{x|%d %b %Y}",
-          "<br>Epidemic within: %{customdata}",
+          "<br>Epidemic within component: %{customdata}",
           "<extra></extra>"
         )
       ) %>%
@@ -870,11 +870,11 @@ server <- function(input, output, session) {
         stackgroup = "fit",
         line = list(width = 0.5, color = "orange"),
         fillcolor = "rgba(255, 165, 0, 0.85)",
-        name = "Epidemic between",
+        name = "Epidemic between component",
         customdata = ~round(between, 1),
         hovertemplate = paste(
           "Date: %{x|%d %b %Y}",
-          "<br>Epidemic between: %{customdata}",
+          "<br>Epidemic between component: %{customdata}",
           "<extra></extra>"
         )
       ) %>%
@@ -1443,7 +1443,7 @@ fixed scale")
         bty = "n",
         cex = 0.90,
         x.intersp = 0.75,
-        legend = c("Epidemic component, between-country", "Epidemic component, within-country", "Endemic"),
+        legend = c("Epidemic component, between-country", "Epidemic component, within-country", "Endemic component"),
         col = c("orange", "#4292C6", "brown2")
       )
     )
@@ -1472,7 +1472,7 @@ fixed scale")
         bty = "n",
         cex = 0.90,
         x.intersp = 0.75,
-        legend = c("Epidemic component, between-country", "Epidemic component, within-country", "Endemic"),
+        legend = c("Epidemic component, between-country", "Epidemic component, within-country", "Endemic component"),
         col = c("orange", "#4292C6", "brown2")
       ),
       col = c("brown2", "#4292C6", "orange")
@@ -1611,7 +1611,7 @@ fixed scale")
           strftime(input$dateRange[1], format = "%d/%m/%Y"),
           " to ",
           strftime(input$dateRange[2], format = "%d/%m/%Y"),
-          ". The plot shows the relative contribution of model components. Dots show the actual counts of reported detections."
+          ". The colours shows the relative contribution of model components. Dots show the actual counts of reported detections."
         )
       } else {
         unit <- which(districts2plot2 == input$predictions_options)
@@ -1620,7 +1620,7 @@ fixed scale")
           strftime(input$dateRange[1], format = "%d/%m/%Y"),
           " to ",
           strftime(input$dateRange[2], format = "%d/%m/%Y"),
-          ". The plot shows the relative contribution of model components. Dots show the actual counts of reported detections."
+          ". The colours shows the relative contribution of model components. Dots show the actual counts of reported detections."
         )
       }
     } else if (input$graph == "forecasting") {

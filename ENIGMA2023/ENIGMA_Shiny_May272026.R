@@ -804,11 +804,11 @@ server <- function(input, output, session) {
       ) +
       scale_fill_manual(
         values = c(
-          "Endemic" = "brown2",
-          "Epidemic within" = "#4292C6",
-          "Epidemic between" = "orange"
+          "Endemic component" = "brown2",
+          "Epidemic within component" = "#4292C6",
+          "Epidemic between component" = "orange"
         ),
-        breaks = c("Epidemic between", "Epidemic within", "Endemic")
+        breaks = c("Epidemic between component", "Epidemic within component", "Endemic component")
       ) +
       scale_y_continuous(limits = c(0, d$ymax), expand = expansion(mult = c(0, 0.02))) +
       scale_x_date(date_breaks = "3 months", date_labels = "%Y\n%b") +
@@ -1343,7 +1343,7 @@ server <- function(input, output, session) {
     ggplot(map_data) +
       geom_sf(aes(fill = forecast_value), color = "white", linewidth = 0.15) +
       scale_fill_gradientn(
-        colours = hcl.colors(10, "YlOrRd", rev = FALSE),
+        colours = hcl.colors(10, "YlOrRd", rev = TRUE),
         limits = forecast_map_domain(),
         na.value = "grey92",
         name = paste0(metric_title, "
@@ -1661,7 +1661,25 @@ fixed scale")
   output$downloadPlot <- downloadHandler(
     filename = function() {
       if (input$graph == "forecasting" && identical(input$forecast_display, "map")) {
-        paste0("forecast_map_week", input$forecast_week, "_", Sys.Date(), ".png")
+        
+        metric_name <- switch(
+          input$forecast_metric,
+          "mean" = "mean",
+          "q50"  = "median",
+          "q90"  = "q90",
+          "forecast"
+        )
+        
+        paste0(
+          "forecast_map_",
+          metric_name,
+          "_week",
+          input$forecast_week,
+          "_",
+          Sys.Date(),
+          ".png"
+        )
+        
       } else if (input$graph == "forecasting" && input$forecasting_options != "Summed all countries") {
         paste0(substr(getPlotName(), 1, nchar(getPlotName()) - 2), "_", input$forecasting_options, "_", Sys.Date(), ".png")
       } else if (input$graph == "country_modelfit" && input$predictions_options != "Summed all countries") {

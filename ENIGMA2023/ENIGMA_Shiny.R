@@ -312,7 +312,7 @@ ui <- fluidPage(
         condition = "input.graph == 'country_modelfit'",
         selectInput(
           "predictions_options",
-          "Country selection (Model fit and Forecast fan chart only)",
+          "Country selection (Model fit and Forecast fan chart only, only countries with > 10 detections total are shown)",
           choices = districts2plot2,
           selected = "Summed all countries",
           selectize = FALSE
@@ -323,7 +323,7 @@ ui <- fluidPage(
         condition = "input.graph == 'forecasting'",
         selectInput(
           "forecasting_options",
-          "Country selection (Model fit and Forecast fan chart only)",
+          "Country selection (Model fit and Forecast fan chart only, only countries with > 10 detections total are shown)",
           choices = districts2plot2,
           selected = "Summed all countries"
         ),

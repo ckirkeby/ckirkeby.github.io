@@ -423,6 +423,97 @@ ui <- fluidPage(
   )
 )
 
+add_leaflet_gradient_legend <- function(
+    map,
+    pal,
+    domain,
+    title,
+    position = "topright",
+    height = 140,
+    width = 20,
+    font_size = 13
+) {
+  
+  rng <- range(domain, na.rm = TRUE)
+  
+  if (!all(is.finite(rng)) || diff(rng) == 0) {
+    rng <- c(0, 1)
+  }
+  
+  ticks <- pretty(rng, n = 5)
+  ticks <- ticks[ticks >= rng[1] & ticks <= rng[2]]
+  
+  if (length(ticks) < 2) {
+    ticks <- rng
+  }
+  
+  cols <- pal(seq(rng[1], rng[2], length.out = 100))
+  
+  tick_height <- height / (length(ticks) - 1)
+  
+  tick_labels <- paste(
+    vapply(
+      rev(ticks),
+      function(x) {
+        sprintf(
+          "<div style='height:%0.1fpx; line-height:%0.1fpx; white-space:nowrap;'>%s</div>",
+          tick_height,
+          tick_height,
+          format(signif(x, 3), trim = TRUE)
+        )
+      },
+      character(1)
+    ),
+    collapse = ""
+  )
+  
+  html <- paste0(
+    "<div class='leaflet-control info legend'
+          style='background:white;
+                 padding:8px;
+                 border-radius:4px;
+                 box-shadow:0 1px 5px rgba(0,0,0,0.4);
+                 font-family:Arial, Helvetica, sans-serif;
+                 font-size:", font_size, "px;
+                 line-height:", font_size + 1, "px;
+                 color:#222;'>",
+    
+    "<div style='margin-bottom:5px;
+                 font-weight:bold;
+                 font-size:", font_size, "px;'>",
+    title,
+    "</div>",
+    
+    "<div style='float:left;'>",
+    "<span style='
+        background:linear-gradient(to top, ",
+    paste(cols, collapse = ","),
+    ");
+        opacity:0.8;
+        height:", height, "px;
+        width:", width, "px;
+        display:block;
+        margin-top:8px;
+      '></span>",
+    "</div>",
+    
+    "<div style='float:left;
+                 margin-left:7px;
+                 font-size:", font_size, "px;'>",
+    tick_labels,
+    "</div>",
+    
+    "<br style='clear:both;'>",
+    "</div>"
+  )
+  
+  map %>%
+    addControl(
+      html = html,
+      position = position
+    )
+}
+
 # ---- Server ----
 server <- function(input, output, session) {
   
@@ -586,12 +677,12 @@ server <- function(input, output, session) {
     }
 
     if (input$map_layer != "points") {
-      m <- m %>% addLegend(
-        pal = pal,
-        values = map_data[[selected_var]],
-        title = selected_title,
-        position = "topright"
-      )
+      m <-m %>%
+        add_leaflet_gradient_legend(
+          pal = pal,
+          domain = map_data[[selected_var]],
+          title = selected_title
+        )
     }
 
     m
@@ -1270,7 +1361,7 @@ server <- function(input, output, session) {
 
     vals <- lapply(seq_len(n_units), function(i) {
       x <- as.numeric(arr[week, i, ])
-      c(
+          c(
         mean = mean(x, na.rm = TRUE),
         q10 = unname(quantile(x, 0.10, na.rm = TRUE)),
         q50 = unname(quantile(x, 0.50, na.rm = TRUE)),
@@ -1312,22 +1403,23 @@ server <- function(input, output, session) {
       round(map_data$q90, 1)
     ) %>% lapply(htmltools::HTML)
 
-    leaflet(map_data) %>%
+    m <- leaflet(map_data) %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
       addPolygons(
         fillColor = ~pal(forecast_value),
         fillOpacity = 0.78,
         color = "white",
-        weight = 1,
-        opacity = 1,
-        label = labels,
-        highlightOptions = highlightOptions(weight = 2, color = "#111827", bringToFront = TRUE)
-      ) %>%
-      addLegend(
-        pal = pal, values = forecast_map_domain(),
-        title = paste0(metric_title, "<br>fixed scale"),
-        position = "topright"
+        weight = 1
       )
+    
+    m <- add_leaflet_gradient_legend(
+      map = m,
+      pal = pal,
+      domain = forecast_map_domain(),
+      title = metric_title
+    )
+    
+    m
   })
 
 

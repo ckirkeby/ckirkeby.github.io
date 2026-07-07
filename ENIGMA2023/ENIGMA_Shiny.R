@@ -75,10 +75,10 @@ extract_hhh4_fitted_components <- function(model, total = TRUE, unit = NULL,
                                            hide0s = TRUE,
                                            plot_name = NULL) {
   stopifnot(inherits(model, "hhh4"))
-
+  
   stsObj <- model$stsObj
   unit_names <- colnames(stsObj)
-
+  
   # Match a country/unit name to its column index if needed.
   if (!isTRUE(total)) {
     if (is.null(unit)) stop("A unit must be supplied when total = FALSE.")
@@ -92,58 +92,58 @@ extract_hhh4_fitted_components <- function(model, total = TRUE, unit = NULL,
       }
     }
   }
-
+  
   obs_all <- if (isTRUE(total)) {
     rowSums(observed(stsObj), na.rm = TRUE)
   } else {
     observed(stsObj)[, unit_idx]
   }
-
+  
   start0 <- surveillance:::yearepoch2point(
     stsObj@start,
     stsObj@freq,
     toleft = TRUE
   )
-
+  
   tp <- start0 + seq_along(obs_all) / stsObj@freq
-
+  
   start_num <- if (is.null(start_vec)) {
     start0
   } else {
     surveillance:::yearepoch2point(start_vec, stsObj@freq)
   }
-
+  
   end_num <- if (is.null(end_vec)) {
     tp[length(tp)]
   } else {
     surveillance:::yearepoch2point(end_vec, stsObj@freq)
   }
-
+  
   tp_in_range <- which(tp >= start_num & tp <= end_num)
-
+  
   # This returns the same fitted component matrices used by the surveillance plot:
   # endemic, epi.own and epi.neighbours.
   mean_hhh <- surveillance:::meanHHH(model$coefficients, terms(model))
-
+  
   comp <- if (isTRUE(total)) {
     as.data.frame(sapply(mean_hhh, rowSums, na.rm = TRUE))
   } else {
     as.data.frame(sapply(mean_hhh, "[", i = TRUE, j = unit_idx))
   }
-
+  
   keep <- model$control$subset %in% tp_in_range
   comp <- comp[keep, , drop = FALSE]
-
+  
   nml <- tolower(names(comp))
   get_col <- function(patterns, fallback) {
     hits <- unique(unlist(lapply(patterns, function(z) grep(z, nml, perl = TRUE))))
     if (length(hits) > 0) hits[1] else fallback
   }
-
+  
   idx_end <- get_col(c("(^|\\.)endemic$", "endemic", "^end$"), 1)
   idx_own <- get_col(c("epi\\.own", "own", "within", "^ar$", "autoregressive"), min(2, ncol(comp)))
   idx_ne  <- get_col(c("epi\\.neigh", "neigh", "neighbor", "between", "^ne$"), min(3, ncol(comp)))
-
+  
   data.frame(
     endemic = as.numeric(comp[[idx_end]]),
     within = as.numeric(comp[[idx_own]]),
@@ -243,7 +243,7 @@ ui <- fluidPage(
       .logo-row .sidebar-logo-fallback { display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; color: #7b1f24; background: #fff; border: 1px solid #ead7d7; font-weight: 800; font-size: 12px; width: 140px; height: 44px; text-align: center; }
     "))
   ),
-
+  
   div(
     class = "app-hero",
     fluidRow(
@@ -281,7 +281,7 @@ ui <- fluidPage(
         end = strftime(endDate, format = "%Y-%m-%d"),
         format = "dd/mm/yyyy"
       ),
-
+      
       radioButtons(
         "graph",
         "Select:",
@@ -293,7 +293,7 @@ ui <- fluidPage(
         ),
         selected = "hpai_map"
       ),
-
+      
       conditionalPanel(
         condition = "input.graph == 'hpai_map'",
         radioButtons(
@@ -307,7 +307,7 @@ ui <- fluidPage(
           selected = "total"
         )
       ),
-
+      
       conditionalPanel(
         condition = "input.graph == 'country_modelfit'",
         selectInput(
@@ -318,7 +318,7 @@ ui <- fluidPage(
           selectize = FALSE
         )
       ),
-
+      
       conditionalPanel(
         condition = "input.graph == 'forecasting'",
         selectInput(
@@ -341,6 +341,11 @@ ui <- fluidPage(
             min = 1, max = 4, value = 1, step = 1,
             animate = animationOptions(interval = 1200, loop = TRUE)
           ),
+          div(
+            style = "margin-top:-8px; margin-bottom:12px; font-size:13px; color:#334155;",
+            strong("Forecast starting: "),
+            textOutput("forecast_starting_text", inline = TRUE)
+          ),
           radioButtons(
             "forecast_metric",
             "Map value:",
@@ -349,7 +354,7 @@ ui <- fluidPage(
           )
         )
       ),
-
+      
       HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),
       div(
         span("The purpose of this webpage is to show the predictions of the ENIGMA HPAI model. This model has been developed during research at the University of Copenhagen in "),
@@ -387,7 +392,7 @@ ui <- fluidPage(
         span(" for more details.", style = "font-size:80%;")
       )
     ),
-
+    
     mainPanel(
       width = 9,
       class = "main-panel-card",
@@ -401,7 +406,7 @@ ui <- fluidPage(
           div(class = "plot-caption", textOutput("info")),
           DTOutput("table")
         ),
-
+        
         tabPanel(
           "Model description",
           h3("Endemic-epidemic modelling of highly pathogenic avian influenza in Europe"),
@@ -537,7 +542,7 @@ server <- function(input, output, session) {
       week = as.numeric(iso_week)
     )
   }
-
+  
   # ---- Reactive date helpers ----
   startWeek <- reactive({
     week52_yearweek(input$dateRange[1])$week
@@ -554,23 +559,23 @@ server <- function(input, output, session) {
   endYear <- reactive({
     week52_yearweek(input$dateRange[2])$year
   })
-
+  
   startYearWeek <- reactive({
     yearweek(paste0(startYear(), " W", startWeek()))
   })
-
+  
   endYearWeek <- reactive({
     yearweek(paste0(endYear(), " W", endWeek()))
   })
-
+  
   start <- reactive({
     as.numeric(floor(difftime(input$dateRange[1], minDate, units = "weeks") + 1))
   })
-
+  
   end <- reactive({
     as.numeric(floor(difftime(input$dateRange[2], minDate, units = "weeks") + 1))
   })
-
+  
   # ---- Data for maps and tables ----
   europe_mapData1 <- reactive({
     europe_data_weekly %>%
@@ -578,14 +583,14 @@ server <- function(input, output, session) {
       group_by(ADM0_A3) %>%
       summarise(no_outbreaks = sum(no_outbreaks, na.rm = TRUE), .groups = "drop")
   })
-
+  
   europe_mapData <- reactive({
     t1 <- merge(europeanCountries, europe_mapData1(), by = "ADM0_A3", all.x = TRUE)
     t1$no_outbreaks[is.na(t1$no_outbreaks)] <- 0
     t1$outbreaksArea <- t1$no_outbreaks / (t1$area_sqkm / 10000)
     st_as_sf(t1)
   })
-
+  
   europe_data_sf <- reactive({
     europe_data %>%
       filter(yearWeek >= startYearWeek(), yearWeek <= endYearWeek()) %>%
@@ -593,7 +598,7 @@ server <- function(input, output, session) {
       filter(!is.na(Longitude), !is.na(Latitude), Latitude < 74.0) %>%
       st_as_sf(coords = c("Longitude", "Latitude"), crs = "EPSG:4326")
   })
-
+  
   # ---- Simulation for forecasting ----
   sim <- reactive({
     startSim <- min(end() - 1)
@@ -607,7 +612,7 @@ server <- function(input, output, session) {
       y.start = y.start
     )
   })
-
+  
   # ---- Interactive output selector ----
   output$interactive_output <- renderUI({
     if (input$graph == "hpai_map") {
@@ -624,30 +629,45 @@ server <- function(input, output, session) {
       plotOutput("hpai_static", height = 760, width = "100%")
     }
   })
-
+  
+  output$forecast_starting_text <- renderText({
+    req(input$forecast_week, input$dateRange)
+    
+    last_selected_week_start <- lubridate::floor_date(
+      as.Date(input$dateRange[2]),
+      unit = "week",
+      week_start = 1
+    )
+    
+    forecast_start <- last_selected_week_start +
+      lubridate::weeks(input$forecast_week - 1)
+    
+    format(forecast_start, "%d %b %Y")
+  })
+  
   # ---- Interactive leaflet map ----
   output$hpai_leaflet <- renderLeaflet({
     map_data <- st_transform(europe_mapData(), 4326)
     point_data <- st_transform(europe_data_sf(), 4326)
-
+    
     selected_var <- if (input$map_layer == "area") "outbreaksArea" else "no_outbreaks"
     selected_title <- if (input$map_layer == "area") "HPAI / 10,000 km²" else "HPAI total"
-
+    
     map_data$selected_value <- map_data[[selected_var]]
-
+    
     pal <- colorNumeric(
       palette = "Reds",
       domain = map_data$selected_value,
       na.color = "transparent"
     )
-
+    
     labels <- sprintf(
       "<strong>%s</strong><br/>HPAI detections: %s<br/>HPAI / 10,000 km²: %s",
       map_data$ADM0_A3,
       map_data$no_outbreaks,
       round(map_data$outbreaksArea, 2)
     ) %>% lapply(htmltools::HTML)
-
+    
     m <- leaflet(map_data) %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
       addPolygons(
@@ -663,7 +683,7 @@ server <- function(input, output, session) {
           bringToFront = TRUE
         )
       )
-
+    
     if (input$map_layer == "points" && nrow(point_data) > 0) {
       m <- m %>%
         addCircleMarkers(
@@ -675,7 +695,7 @@ server <- function(input, output, session) {
           group = "Detection locations"
         )
     }
-
+    
     if (input$map_layer != "points") {
       m <-m %>%
         add_leaflet_gradient_legend(
@@ -684,10 +704,10 @@ server <- function(input, output, session) {
           title = selected_title
         )
     }
-
+    
     m
   })
-
+  
   # ---- Interactive plotly graphs ----
   # Timeseries: weekly bars with the earlier Plotly range-slider overview.
   # Month/year labels are applied to the x-axis; the bars themselves are unchanged.
@@ -699,7 +719,7 @@ server <- function(input, output, session) {
       detections = y,
       hover = paste0("Week starting: ", format(date, "%d %b %Y"), "<br>Detections: ", detections)
     )
-
+    
     plot_ly(
       df,
       x = ~date,
@@ -732,7 +752,7 @@ server <- function(input, output, session) {
       ) %>%
       config(displaylogo = FALSE, scrollZoom = TRUE)
   })
-
+  
   # Interactive model fit.
   # The fitted components are taken from the object returned by
   # surveillance::plot(..., type = "fitted"), rather than reconstructed manually.
@@ -740,14 +760,14 @@ server <- function(input, output, session) {
   # surveillance model-fit plot while still allowing zooming and hover text.
   model_fit_data_plotly <- reactive({
     is_total <- identical(input$predictions_options, "Summed all countries")
-
+    
     stsObj <- final_model$stsObj
     obs_mat <- observed(stsObj)
-
+    
     if (is_total) {
       title_txt <- "Summed all countries"
       obs_all <- rowSums(obs_mat, na.rm = TRUE)
-
+      
       tmp_png <- tempfile(fileext = ".png")
       png(tmp_png, width = 10, height = 7, units = "in", res = 96)
       fit_comp <- plot(
@@ -771,7 +791,7 @@ server <- function(input, output, session) {
       col_id <- districts2plot[unit]
       title_txt <- districts2plot2[unit]
       obs_all <- obs_mat[, col_id]
-
+      
       tmp_png <- tempfile(fileext = ".png")
       png(tmp_png, width = 10, height = 7, units = "in", res = 96)
       fit_comp <- plot(
@@ -791,52 +811,52 @@ server <- function(input, output, session) {
       dev.off()
       unlink(tmp_png)
     }
-
+    
     fit_df <- as.data.frame(fit_comp)
     validate(need(nrow(fit_df) > 0, "No fitted model components available for the selected period."))
-
+    
     nm <- names(fit_df)
     nml <- tolower(nm)
     pick_col <- function(patterns) {
       hits <- unique(unlist(lapply(patterns, function(p) grep(p, nml, perl = TRUE))))
       if (length(hits) == 0) NA_integer_ else hits[1]
     }
-
+    
     idx_end <- pick_col(c("(^|\\.)endemic$", "endemic", "^end$"))
     idx_own <- pick_col(c("epi\\.own", "own", "within", "^ar$", "autoregressive"))
     idx_ne  <- pick_col(c("epi\\.neigh", "neigh", "neighbor", "between", "^ne$"))
-
+    
     validate(need(!any(is.na(c(idx_end, idx_own, idx_ne))),
                   paste0("Could not identify endemic, within-country and between-country fitted components. Available columns: ",
                          paste(nm, collapse = ", "))))
-
+    
     # Recreate exactly the same model time selection used internally by
     # surveillance:::plotHHH4_fitted1(). This is the important part: the
     # fitted polygons are evaluated on final_model$control$subset, while the
     # observed points are drawn for all time points in the selected range.
     start0 <- surveillance:::yearepoch2point(stsObj@start, stsObj@freq, toleft = TRUE)
     tp <- start0 + seq_along(obs_all) / stsObj@freq
-
+    
     start_num <- surveillance:::yearepoch2point(c(startYear(), startWeek()), stsObj@freq)
     end_num <- surveillance:::yearepoch2point(c(endYear(), endWeek() + 0.1), stsObj@freq)
-
+    
     tp_in_range <- which(tp >= start_num & tp <= end_num)
     tp_in_subset <- intersect(final_model$control$subset, tp_in_range)
-
+    
     # Convert the model's weekly index to Monday-based dates for Plotly. The y-values
     # and row selection are still taken from surveillance::plot(), so the components
     # and observed counts match the original surveillance model-fit plot.
     all_dates <- lubridate::floor_date(as.Date(minDate) + lubridate::weeks(seq_along(obs_all) - 1),
                                        unit = "week", week_start = 1)
-
+    
     comp_dates <- all_dates[tp_in_subset]
     obs_dates <- all_dates[tp_in_range]
     obs_y <- obs_all[tp_in_range]
-
+    
     n_comp <- min(nrow(fit_df), length(comp_dates))
     fit_df <- fit_df[seq_len(n_comp), , drop = FALSE]
     comp_dates <- comp_dates[seq_len(n_comp)]
-
+    
     comp_wide <- tibble(
       date = comp_dates,
       endemic = as.numeric(fit_df[[idx_end]]),
@@ -848,22 +868,22 @@ server <- function(input, output, session) {
         cum_within = endemic + within,
         cum_between = endemic + within + between
       )
-
+    
     obs_df <- tibble(
       date = obs_dates,
       observed = as.numeric(obs_y)
     )
-
+    
     ymax <- suppressWarnings(max(c(comp_wide$cum_between, obs_df$observed), na.rm = TRUE))
     if (!is.finite(ymax) || ymax <= 0) ymax <- 1
     ymax <- ymax * 1.08
-
+    
     list(title = title_txt, components = comp_wide, observed = obs_df, ymax = ymax)
   })
-
+  
   model_fit_static_ggplot <- reactive({
     d <- model_fit_data_plotly()
-
+    
     comp_long <- d$components %>%
       select(date, endemic, within, between) %>%
       pivot_longer(
@@ -878,7 +898,7 @@ server <- function(input, output, session) {
           labels = c("Epidemic between component", "Epidemic within component", "Endemic component")
         )
       )
-
+    
     ggplot() +
       geom_area(
         data = comp_long,
@@ -911,12 +931,12 @@ server <- function(input, output, session) {
         panel.grid.minor = element_blank()
       )
   })
-
+  
   output$model_fit_plotly <- renderPlotly({
     d <- model_fit_data_plotly()
     comp <- d$components
     obs <- d$observed %>% filter(observed > 0)
-
+    
     plot_ly() %>%
       add_trace(
         data = comp,
@@ -1010,7 +1030,7 @@ server <- function(input, output, session) {
       ) %>%
       config(displaylogo = FALSE, scrollZoom = TRUE)
   })
-
+  
   # Helper: extract simulation array as time x country x simulation.
   # surveillance::simulate.hhh4(..., nsim > 1, simplify = TRUE) returns an
   # object of class "hhh4sims", which is an array with dimensions:
@@ -1025,12 +1045,12 @@ server <- function(input, output, session) {
                   "Could not extract simulations as a forecast week x country x simulation array."))
     arr
   })
-
+  
   # Helper to turn the simulation object into a matrix with rows = forecast weeks
   # and columns = simulation runs. Used for the fan chart.
   forecast_sim_matrix <- reactive({
     arr <- forecast_sim_array()
-
+    
     if (input$forecasting_options == "Summed all countries") {
       out <- apply(arr, c(1, 3), sum, na.rm = TRUE)
     } else {
@@ -1047,14 +1067,14 @@ server <- function(input, output, session) {
       validate(need(!is.na(unit_index), "Could not match selected country to simulation output."))
       out <- as.matrix(arr[, unit_index, , drop = FALSE][, 1, ])
     }
-
+    
     out
   })
-
+  
   forecast_fan_data <- reactive({
     sim_mat <- forecast_sim_matrix()
     validate(need(nrow(sim_mat) > 0, "No forecast simulations available."))
-
+    
     q05 <- apply(sim_mat, 1, quantile, probs = 0.05, na.rm = TRUE)
     q10 <- apply(sim_mat, 1, quantile, probs = 0.10, na.rm = TRUE)
     q25 <- apply(sim_mat, 1, quantile, probs = 0.25, na.rm = TRUE)
@@ -1063,9 +1083,9 @@ server <- function(input, output, session) {
     q90 <- apply(sim_mat, 1, quantile, probs = 0.90, na.rm = TRUE)
     q95 <- apply(sim_mat, 1, quantile, probs = 0.95, na.rm = TRUE)
     mn <- rowMeans(sim_mat, na.rm = TRUE)
-
+    
     prev_idx <- max(1, end() - 1)
-
+    
     # Use Monday as the start of the surveillance week, matching the timeseries.
     # The black dot is the last observed week. The fan starts on the following Monday.
     last_observed_week_start <- lubridate::floor_date(
@@ -1074,7 +1094,7 @@ server <- function(input, output, session) {
       week_start = 1
     )
     forecast_start <- last_observed_week_start + lubridate::weeks(1)
-
+    
     df <- tibble(
       date = forecast_start + lubridate::weeks(seq_len(nrow(sim_mat)) - 1),
       q05 = as.numeric(q05),
@@ -1095,7 +1115,7 @@ server <- function(input, output, session) {
           "<br>50% interval: ", round(q25, 1), " - ", round(q75, 1)
         )
       )
-
+    
     if (input$forecasting_options == "Summed all countries") {
       previous_observed <- sum(observed(AI_sts)[prev_idx, ], na.rm = TRUE)
       plot_title <- "Summed all countries"
@@ -1105,7 +1125,7 @@ server <- function(input, output, session) {
       previous_observed <- observed(AI_sts)[prev_idx, unit_id]
       plot_title <- districts2plot2[unit]
     }
-
+    
     obs_df <- tibble(
       date = last_observed_week_start,
       observed_date = last_observed_week_start,
@@ -1116,19 +1136,19 @@ server <- function(input, output, session) {
         "<br>First forecast week starts: ", format(forecast_start, "%d %b %Y")
       )
     )
-
+    
     ymax <- suppressWarnings(max(c(df$q95, df$q90, df$q75, df$mean, obs_df$observed), na.rm = TRUE))
     if (!is.finite(ymax) || ymax <= 0) ymax <- 1
-
+    
     make_band <- function(dat, lower, upper) {
       tibble(
         date = c(dat$date, rev(dat$date)),
         value = c(dat[[lower]], rev(dat[[upper]]))
       )
     }
-
+    
     forecast_breaks <- c(obs_df$date, df$date)
-
+    
     list(
       title = plot_title,
       df = df,
@@ -1142,10 +1162,10 @@ server <- function(input, output, session) {
       breaks = forecast_breaks
     )
   })
-
+  
   forecasting_plotly <- reactive({
     d <- forecast_fan_data()
-
+    
     plot_ly() %>%
       add_trace(
         data = d$band_90,
@@ -1254,15 +1274,15 @@ server <- function(input, output, session) {
       ) %>%
       config(displaylogo = FALSE, scrollZoom = TRUE)
   })
-
+  
   output$forecasting_plotly <- renderPlotly({
     req(input$graph == "forecasting")
     forecasting_plotly()
   })
-
+  
   forecast_fan_static_ggplot <- reactive({
     d <- forecast_fan_data()
-
+    
     ggplot() +
       geom_ribbon(
         data = d$df,
@@ -1327,13 +1347,13 @@ server <- function(input, output, session) {
         panel.grid.minor = element_blank()
       )
   })
-
-
+  
+  
   forecast_map_domain <- reactive({
     arr <- forecast_sim_array()
     metric <- input$forecast_metric
     if (is.null(metric)) metric <- "q50"
-
+    
     vals <- lapply(seq_len(dim(arr)[1]), function(w) {
       apply(arr[w, , , drop = FALSE][1, , ], 1, function(x) {
         x <- as.numeric(x)
@@ -1350,48 +1370,55 @@ server <- function(input, output, session) {
     if (!is.finite(max_val) || max_val <= 0) max_val <- 1
     c(0, max_val)
   })
-
+  
   forecast_map_data <- reactive({
     arr <- forecast_sim_array()
     week <- input$forecast_week
     validate(need(week >= 1 && week <= dim(arr)[1], "Selected forecast week is outside the simulation horizon."))
-
+    
     country_codes <- colnames(observed(AI_sts))
     n_units <- min(length(country_codes), dim(arr)[2])
-
+    
     vals <- lapply(seq_len(n_units), function(i) {
       x <- as.numeric(arr[week, i, ])
-          c(
+      c(
         mean = mean(x, na.rm = TRUE),
         q10 = unname(quantile(x, 0.10, na.rm = TRUE)),
         q50 = unname(quantile(x, 0.50, na.rm = TRUE)),
         q90 = unname(quantile(x, 0.90, na.rm = TRUE))
       )
     })
-
+    
     fc <- as_tibble(do.call(rbind, vals)) %>%
       mutate(ADM0_A3 = country_codes[seq_len(n_units)])
-
+    
     map_data <- europeanCountries %>%
       left_join(fc, by = "ADM0_A3") %>%
       st_as_sf() %>%
       st_transform(4326)
-
+    
     map_data
   })
-
+  
   output$forecast_leaflet <- renderLeaflet({
     map_data <- forecast_map_data()
     metric <- input$forecast_metric
     if (is.null(metric)) metric <- "q50"
     metric_title <- c(q50 = "Median forecast", mean = "Mean forecast", q90 = "90% quantile")[[metric]]
     metric_title <- ifelse(is.null(metric_title), "Forecast", metric_title)
-
+    
     map_data$forecast_value <- map_data[[metric]]
     pal <- colorNumeric("YlOrRd", domain = forecast_map_domain(), na.color = "#f1f5f9")
-
-    forecast_date <- as.Date(input$dateRange[2]) + weeks(input$forecast_week - 1)
-
+    
+    last_selected_week_start <- lubridate::floor_date(
+      as.Date(input$dateRange[2]),
+      unit = "week",
+      week_start = 1
+    )
+    
+    forecast_date <- last_selected_week_start +
+      lubridate::weeks(input$forecast_week - 1)
+    
     labels <- sprintf(
       "<strong>%s</strong><br/>Forecast week %s: %s<br/>Mean: %s<br/>Median: %s<br/>10%%-90%% interval: %s-%s",
       map_data$ADM0_A3,
@@ -1402,7 +1429,7 @@ server <- function(input, output, session) {
       round(map_data$q10, 1),
       round(map_data$q90, 1)
     ) %>% lapply(htmltools::HTML)
-
+    
     m <- leaflet(map_data) %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
       addPolygons(
@@ -1421,9 +1448,9 @@ server <- function(input, output, session) {
     
     m
   })
-
-
-
+  
+  
+  
   forecast_map_static_ggplot <- reactive({
     map_data <- forecast_map_data()
     metric <- input$forecast_metric
@@ -1431,7 +1458,7 @@ server <- function(input, output, session) {
     metric_title <- c(q50 = "Median forecast", mean = "Mean forecast", q90 = "90% quantile")[[metric]]
     metric_title <- ifelse(is.null(metric_title), "Forecast", metric_title)
     map_data$forecast_value <- map_data[[metric]]
-
+    
     ggplot(map_data) +
       geom_sf(aes(fill = forecast_value), color = "white", linewidth = 0.15) +
       scale_fill_gradientn(
@@ -1453,12 +1480,12 @@ fixed scale")
         legend.position = "right"
       )
   })
-
+  
   output$hpai_plotly <- renderPlotly({
     req(input$graph == "hpai_timeseries")
     hpai_timeseries_plotly()
   })
-
+  
   # ---- Static plots retained for model fit, forecasting, and downloadable output ----
   hpai_map_static <- reactive({
     myMap1 <- ggplot() +
@@ -1473,7 +1500,7 @@ fixed scale")
         plot.margin = unit(c(1, -0.5, 1, 1), "cm")
       ) +
       labs(fill = expression(paste("HPAI total")))
-
+    
     myMap2 <- ggplot() +
       geom_sf(data = europe_mapData(), aes(fill = outbreaksArea), color = "black") +
       theme_void() +
@@ -1486,16 +1513,16 @@ fixed scale")
         plot.margin = unit(c(1, 1, 1, -0.5), "cm")
       ) +
       labs(fill = expression(paste("HPAI/10,000 km"^"2")))
-
+    
     myMap3 <- ggplot(europe_mapData()) +
       geom_sf(fill = "seashell", show.legend = FALSE) +
       geom_sf(data = europe_data_sf(), mapping = aes(), col = "darkred", alpha = 0.5, size = 0.3, show.legend = FALSE) +
       theme_void()
-
+    
     print(ggarrange(myMap1, myMap2, myMap3, ncol = 3))
     recordPlot()
   })
-
+  
   hpai_timeseries_static <- reactive({
     obs <- observed(AI_sts[start():end(), , drop = FALSE])
     y <- rowSums(obs, na.rm = TRUE)
@@ -1503,16 +1530,16 @@ fixed scale")
       date = week_dates_from_range(input$dateRange[1], length(y)),
       detections = y
     )
-
+    
     myPlot <- ggplot(df, aes(x = date, y = detections)) +
       geom_col(width = 6) +
       labs(x = "Week starting date", y = "No. detected cases") +
       theme_minimal(base_size = 13)
-
+    
     print(myPlot)
     recordPlot()
   })
-
+  
   allCountry_modelfit <- reactive({
     myPlot <- plot(
       final_model,
@@ -1541,7 +1568,7 @@ fixed scale")
     )
     recordPlot()
   })
-
+  
   country_modelfit <- reactive({
     unit <- which(districts2plot2 == input$predictions_options)
     myPlot <- plot(
@@ -1571,7 +1598,7 @@ fixed scale")
     )
     recordPlot()
   })
-
+  
   AllCountry_forecasting <- reactive({
     myPlot <- plot(
       sim(),
@@ -1597,7 +1624,7 @@ fixed scale")
     print(myPlot)
     recordPlot()
   })
-
+  
   country_forecasting <- reactive({
     unit <- which(districts2plot2 == input$forecasting_options)
     myPlot <- plot(
@@ -1625,7 +1652,7 @@ fixed scale")
     print(myPlot)
     recordPlot()
   })
-
+  
   output$hpai_static <- renderPlot({
     if (input$graph == "country_modelfit") {
       if (input$predictions_options == "Summed all countries") {
@@ -1634,7 +1661,7 @@ fixed scale")
         replayPlot(req(country_modelfit()))
       }
     }
-
+    
     if (input$graph == "forecasting") {
       if (input$forecasting_options == "Summed all countries") {
         replayPlot(req(AllCountry_forecasting()))
@@ -1643,7 +1670,7 @@ fixed scale")
       }
     }
   })
-
+  
   # ---- Table ----
   hpai_table <- reactive({
     data.frame(
@@ -1673,11 +1700,11 @@ fixed scale")
         )
       )
   })
-
+  
   output$table <- renderDT(server = FALSE, {
     if (input$graph == "hpai_map") hpai_table()
   })
-
+  
   # ---- Caption text ----
   output$info <- renderText({
     if (input$graph == "hpai_map") {
@@ -1736,7 +1763,7 @@ fixed scale")
       }
     }
   })
-
+  
   # ---- Download static PNG ----
   getPlotName <- reactive({
     if (input$graph == "hpai_map") {
@@ -1749,7 +1776,7 @@ fixed scale")
       if (input$forecasting_options == "Summed all countries") "AllCountry_forecasting()" else "country_forecasting()"
     }
   })
-
+  
   output$downloadPlot <- downloadHandler(
     filename = function() {
       if (input$graph == "forecasting" && identical(input$forecast_display, "map")) {

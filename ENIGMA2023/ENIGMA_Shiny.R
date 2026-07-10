@@ -62,9 +62,12 @@ safe_max <- function(x, add = 0) {
 # Convert sequential week index in selected range to approximate dates.
 # This is mainly used for plotly x-axis labels.
 week_dates_from_range <- function(date_start, n) {
-  as.Date(date_start) + weeks(seq_len(n) - 1)
+  lubridate::floor_date(
+    as.Date(date_start),
+    unit = "week",
+    week_start = 1
+  ) + lubridate::weeks(seq_len(n) - 1)
 }
-
 # Extract the exact fitted component means used by surveillance::plot(..., type = "fitted"),
 # without drawing the base R surveillance plot and without printing anything to the console.
 # This follows the relevant part of surveillance:::plotHHH4_fitted1():
@@ -717,7 +720,7 @@ server <- function(input, output, session) {
     df <- tibble(
       date = week_dates_from_range(input$dateRange[1], length(y)),
       detections = y,
-      hover = paste0("Week starting: ", format(date, "%d %b %Y"), "<br>Detections: ", detections)
+      hover = paste0("Reporting week: ", format(date, "%d %b %Y"), "<br>Detections: ", detections)
     )
     
     plot_ly(
@@ -726,7 +729,7 @@ server <- function(input, output, session) {
       y = ~detections,
       type = "bar",
       marker = list(color = "#5b5b5b"),
-      hovertemplate = "Week starting: %{x|%d %b %Y}<br>Detections: %{y}<extra></extra>",
+      hovertemplate = "Reporting week: %{x|%d %b %Y}<br>Detections: %{y}<extra></extra>",
       name = "Detections"
     ) %>%
       layout(

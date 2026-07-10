@@ -358,9 +358,9 @@ ui <- fluidPage(
       HTML('<hr style = "border-color: #800000; height: 5px;width: 100%">'),
       div(
         span("The purpose of this webpage is to show the predictions of the ENIGMA HPAI model. This model has been developed during research at the University of Copenhagen in "),
-        span(a("the ENIGMA project, ", href = "https://ivh.ku.dk/forskning/dyrevelfaerd-og-sygdomsbekaempelse/projektside/enigma/", target = "_blank")),
+        span(a("the ENIGMA project, ", href = "https://ivh.ku.dk/forskning/dyresundhed-og-velfaerd/projektside/enigma/", target = "_blank")),
         span("2021-2024. The ENIGMA project is based in "),
-        span(a("the Avian Influenza Epidemiology Subgroup ", href = "https://ivh.ku.dk/english/research/animal-welfare-and-disease-control/avian-influenza-epidemiology/", target = "_blank")),
+        span(a("the Avian Influenza Epidemiology Subgroup ", href = "https://ivh.ku.dk/english/research/animal-health-and-welfare/avian-influenza-epidemiology/", target = "_blank")),
         span("at the University of Copenhagen and is part of the "),
         span(a("Danish Veterinary Contingency Consortium (DKVET) ", href = "https://dkvet.dk/english/about/", target = "_blank")),
         span("funded by the Danish Food and Veterinary Administration. R code and data used for the ENIGMA HPAI model is available at "),

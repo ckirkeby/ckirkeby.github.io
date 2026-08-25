@@ -30,7 +30,6 @@ library(plotly)
 #setwd("C:/Users/hzs315/Documents/ckirkeby.github.io/ENIGMA2023/")
 
 # ---- Read newest model/data object ----
-set_trust_promises(TRUE)
 tt <- tempfile()
 download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode = "wb")
 enigma_bundle <- qs2::qs_read(tt, validate_checksum = TRUE)

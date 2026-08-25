@@ -158,7 +158,7 @@ qs2::qs_save(list(ai_data=ai_data,
                districts2plot2=districts2plot2,   
                AI_sts=AI_sts,
                final_model=final_model), 
-          file="for_ai.car", preset="archive")
+          file="for_ai.car",compress_level=14L)
 file.copy(file.path(getwd(), "for_ai.car"), paste0(filepath, "for_ai.car"), overwrite=TRUE)
 
 # Clean up:

@@ -19,7 +19,7 @@ library(grid)
 library(gridExtra)
 library(spdep)
 library(fanplot)
-library(qs)
+library(qs2)
 library(countrycode)
 library(DT)
 library(lubridate)
@@ -33,10 +33,12 @@ library(plotly)
 set_trust_promises(TRUE)
 tt <- tempfile()
 download.file("http://www.enigmahpai.org/ENIGMA2023/for_ai.car", tt, mode = "wb")
-qs::qload(tt)
+enigma_bundle <- qs2::qs_read(tt, validate_checksum = TRUE)
+stopifnot(is.list(enigma_bundle), !is.null(names(enigma_bundle)))
+list2env(enigma_bundle, envir = environment())
+rm(enigma_bundle)
 updateDate <- strftime(as.Date(substring(filename, 7, 14), format = "%Y%m%d"), format = "%d/%m/%Y")
 file.remove(tt)
-
 # ---- Helper functions ----
 makeFootnote <- function(footnoteText = format(Sys.time(), "%d %b %Y"),
                          size = .7,

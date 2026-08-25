@@ -35,7 +35,7 @@ library(ggplot2)
 library(ggpubr)
 library(spdep)
 library(fanplot)
-library(qs)
+library(qs2)
 
 ####### 1) Download seneste infur fil til denne folder: ############
 
@@ -137,7 +137,7 @@ save_date <- Sys.Date()
 # PIL IKKE VED DETTE!!: Det gør jeg nu alligevel - når det er mig, der opdaterer (Lene) :-)
 setwd(paste0(filepath,"tmp"))
 
-qs::qsave(list(ai_data=ai_data, 
+qs2::qs_save(list(ai_data=ai_data, 
                save_date=save_date, 
                end_yearWeek=end_yearWeek,
                filename=filename,

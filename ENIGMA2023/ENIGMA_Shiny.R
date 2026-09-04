@@ -240,6 +240,9 @@ ui <- fluidPage(
       .plot-card { background: #ffffff; border: 1px solid #edf0f2; border-radius: 18px; padding: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); }
       .plot-caption { margin-top: 14px; font-size: 14px; line-height: 1.45; color: #334155; }
       .leaflet-container { background: #f7f7f7; border-radius: 14px; }
+      .leaflet-tile-pane {
+  filter: grayscale(100%) brightness(108%) contrast(85%);
+}
       .sidebar-section { padding: 12px 0; border-top: 1px solid #ead7d7; margin-top: 14px; }
       .disclaimer { font-size: 12px; line-height: 1.35; color: #536271; }
       .logo-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
@@ -673,7 +676,7 @@ server <- function(input, output, session) {
     ) %>% lapply(htmltools::HTML)
     
     m <- leaflet(map_data) %>%
-      addProviderTiles(providers$CartoDB.Positron) %>%
+      addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
       addPolygons(
         fillColor = ~pal(selected_value),
         fillOpacity = if (input$map_layer == "points") 0.15 else 0.75,

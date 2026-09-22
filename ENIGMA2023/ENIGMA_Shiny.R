@@ -1438,7 +1438,7 @@ server <- function(input, output, session) {
     ) %>% lapply(htmltools::HTML)
     
     m <- leaflet(map_data) %>%
-      addProviderTiles(providers$CartoDB.Positron) %>%
+      addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
       addPolygons(
         fillColor = ~pal(forecast_value),
         fillOpacity = 0.78,

@@ -120,42 +120,13 @@ area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_a
 
 ### FINAL MODEL FROM KJÆR ET AL. 2023###
 #model with long distance transmission, random effects and seasonality in the epidemic component
-### FINAL MODEL: AI_covar_power_ri ###
-
-final_model_base <- list(
-  end = list(
-    f = ~ 1 + t + ri(type = "iid") - 1,
-    offset = area_frac *
-      (log(AI_coast1 + 1) + log(AI_wet1 + 1))
-  ),
-  ar = list(
-    f = ~ 1 + t + ri(type = "iid") - 1
-  ),
-  ne = list(
-    f = ~ 1 + ri(type = "iid") - 1,
-    weights = W_powerlaw(
-      maxlag = max(
-        neighbourhood(AI_sts),
-        log = TRUE,
-        normalize = FALSE,
-        from0 = FALSE
-      )
-    )
-  ),
-  family = "NegBin1",
-  optimizer = list(
-    stop = list(tol = 1e-5, niter = 500),
-    regression = list(method = "nlminb"),
-    variance = list(method = "Nelder-Mead")
-  ),
-  keep.terms = TRUE
-)
-
-# Match the seed used by createRandomModels()
-set.seed(1248)
-
-final_model <- hhh4(stsObj = AI_sts, control = final_model_base)
-
+final_model_base <- list(end = list(f = ~1 + t +ri(type = "iid") - 1), offset=area_frac*(log(AI_coast1 + 1) + log(AI_wet1 + 1+1)), 
+    ar = list(f= ~ 1 +t+ ri(type = "iid") - 1), 
+                         ne = list(f = ~1 + ri(type = "iid") - 1, weights = W_powerlaw(maxlag = max(neighbourhood(AI_sts),log = TRUE,normalize = TRUE, from0 = TRUE))), 
+                         family = "NegBin1",optimizer = list(stop = list(tol=1e-5, niter=500),
+                                                             regression = list(method="nlminb"),
+                                                             variance = list(method="Nelder-Mead")),keep.terms = TRUE)
+final_model <-hhh4(stsObj = AI_sts,control = final_model_base)
 
 
 ################################################################################

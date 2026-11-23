@@ -1,28 +1,34 @@
+## Copyright (c) 2023 Lene J. Kjaer, Michael P. Ward, Anette E. Boklund,
+## Lars E. Larsen, Charlotte K. Hjulsager, and Carsten T. Kirkeby
+##
+## ENIGMA HPAI - weekly data/model preparation for Shiny (November 2026)
+##
+## PROCEDURE
+## 1. Download the newest infur_YYYYMMDD.xlsx file to the ENIGMA2023 folder.
+## 2. Run this script. It creates a candidate for_ai.car in tmp/ and verifies it.
+## 3. Review the printed checks; if successful, the file is copied to ENIGMA2023/.
+## 4. Test the app, then commit/push for_ai.car using GitHub Desktop.
+##
+## GPL-3.0-or-later. The software is provided without warranty.
+## See https://www.gnu.org/licenses/gpl-3.0.html
+##
+## OPERATIONAL SPECIFICATION
+## - Recent ~1.25-year window prepared by existing ENIGMA_DataPrep.R workflow
+## - Three annual harmonics in both endemic and autoregressive components
+## - Negative-binomial (NegBin1) with country-specific random effects
+## - Fixed neighbourhood-order power-law exponent d = 16 (PROVISIONAL)
+## - No bird-migration, flyway or ecological-region network
+## - Last reported week excluded from fitting to account for reporting delays
+## - Four forecast steps: reporting-delay week + three subsequent weeks
+##
+## IMPORTANT: d = 16 is supported by in-sample sensitivity analysis only;
+## retain as provisional pending rolling out-of-sample validation.
+## IMPORTANT: endemic offset is placed INSIDE end, as required by hhh4.
+## This corrects the previous top-level offset (which was not a valid hhh4
+## component setting). It can change estimates substantially: validate before
+## deploying. The original wetland expression (log(AI_wet1 + 2)) is preserved.
 
-## Copyright © 2023 Lene J. Kjær, Michael P. Ward, Anette E. Boklund, Lars E. Larsen, Charlotte K. Hjulsager, and Carsten T. Kirkeby ”
-
-#### Procedure: ####
-
-# 1) Download latest infur file from the online WOAH repository to the ENGIMAdata 
-#    folder
-# 2) Run the above code that saves the file as a .car file (random file type)
-# 3) Open Github Desktop and push the change made in the ENIGMA2023 repository 
-#    within the ku-awdc.github.io folder (with the new .car file)
-# 4) The app should automatically take the new file as input, and be updated.
-
-
-##############################################################################################
-# This file is part of the Shiny app for the ENIGMA HPAI model version 1.0.   
-
-# The ENIGMA HPAI model is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.                                   
-
-# The ENIGMA HPAI model is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.                                                
-
-# You should have received a copy of the GNU General Public License along with the ENIGMA HPAI model. If not, see <https://www.gnu.org/licenses/>.
-##############################################################################################
-
-
-# Load a bunch of libraries for preformatting the code:
+# ----- Packages -----
 library(tidyverse)
 library(sf)
 library(readxl)
@@ -37,201 +43,286 @@ library(spdep)
 library(fanplot)
 library(qs2)
 
-####### 1) Download seneste infur fil til denne folder: ############
+# ----- Options -----
+POWER_D <- 16
+N_SIM_CHECK <- 20L         # small smoke test, not the app's 500 simulations
+FIT_WARNING_POLICY <- "report" # print optimisation warnings, stop on failed convergence
 
+# ----- Locate repository -----
 filepaths <- c(
   "C:/Users/hzs315/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/",
   "C:/Users/zxd598/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
-  #"C:/Users/hzs315/OneDrive - University of Copenhagen/Documents/GitHub/ckirkeby.github.io/ENIGMA2023/"
 )
-filepath <- filepaths[which(vapply(filepaths, file.exists, logical(1)))[1]]
-
-dir(filepath)
+valid_paths <- filepaths[dir.exists(filepaths)]
+if (length(valid_paths) == 0L) {
+  stop("Cannot find ENIGMA2023 repository. Update 'filepaths' near the top of this script.")
+}
+filepath <- normalizePath(valid_paths[[1]], winslash = "/", mustWork = TRUE)
 setwd(filepath)
+cat("ENIGMA project folder:", filepath, "\n")
 
-# Find the file:
-ff <- list.files(pattern="infur")
-# Define filename:
-filename <- ff[which.max(file.info(ff)[,"mtime"])]
-# Obs! filename cannot contain stuff like (1)!...
-filename
-# Safety first:
-stopifnot(length(filename)==1)
-# Extract just the filename:
-sheetname <-basename(filename) |>
-  stringr::str_extract("(.*)\\.\\w+", group = 1) 
-# Read in the data:
-ai_data <- readxl::read_excel(filename, sheet=sheetname)
+# ----- Read newest WOAH file -----
+ff <- list.files(path = filepath, pattern = "^infur_[0-9]{8}\\.xlsx$", full.names = FALSE)
+if (length(ff) == 0L) stop("No infur_YYYYMMDD.xlsx file found in ", filepath)
+# Prefer the report date in the filename over filesystem modification time.
+filename <- ff[which.max(as.integer(sub("^infur_([0-9]{8})\\.xlsx$", "\\1", ff)))]
+if (length(filename) != 1L || grepl("[()]", filename)) stop("Invalid WOAH filename.")
+sheetname <- tools::file_path_sans_ext(basename(filename))
+cat("Selected WOAH file:", filename, "\n")
+ai_data <- readxl::read_excel(file.path(filepath, filename), sheet = sheetname)
+if (nrow(ai_data) == 0L) stop("WOAH input file contains no data.")
 
-############################ From Lenes script #################################
+# ----- Existing ENIGMA data preparation (unchanged) -----
+source("./src/ENIGMA_custom_functions.R")
+source("./src/ENIGMA_DataPrep.R")
 
-### RUN THE CUSTOM FUNCTIONS SCRIPT ###
-source('./src/ENIGMA_custom_functions.R')
+needed <- c("end_yearweek", "AI_weekly", "AI_wet", "AI_coast",
+            "country_area", "europe_adjmat", "europeanCountries.sub",
+            "endDate", "updateDate", "end_yearWeek", "europe_data",
+            "europe_data_weekly", "europeanCountries")
+missing_objects <- needed[!vapply(needed, exists, logical(1), inherits = TRUE)]
+if (length(missing_objects)) stop("Data preparation did not create: ", paste(missing_objects, collapse = ", "))
 
-### RUN THE DATA PREPARATION SCRIPT ###
-source('./src/ENIGMA_DataPrep.R') 
+# ----- Reproduce existing Shiny data window exactly -----
+endWeek <- as.numeric(lubridate::isoweek(end_yearweek))
+endYear <- as.numeric(lubridate::isoyear(end_yearweek))
+start_yearweek <- end_yearweek - (52 + 13)
 
+N <- nrow(AI_weekly)
+subset_start <- N - (52 - endWeek) - (52 + 13) - 52
+subset_end   <- N - 52 - (52 - endWeek) + 4
+if (subset_start < 1L || subset_end > N || subset_end < subset_start) {
+  stop("Invalid model window: ", subset_start, ":", subset_end, " for ", N, " total rows.")
+}
+ix <- subset_start:subset_end
+AI_weekly1 <- AI_weekly[ix, , drop = FALSE]
+AI_wet1 <- AI_wet[ix, , drop = FALSE]
+AI_coast1 <- AI_coast[ix, , drop = FALSE]
+area_selected <- country_area[ix, , drop = FALSE]
+area_denominator <- rowSums(area_selected)
+if (any(!is.finite(area_denominator) | area_denominator <= 0)) {
+  stop("Invalid country area fractions for one or more weeks.")
+}
+area_frac <- area_selected / area_denominator
 
-### NOW RUN MODEL BASED ON THR LATEST DATA, BUT STARTING 1 1/4 year from the latest data
+start_W <- lubridate::isoweek(start_yearweek)
+start_Y <- lubridate::isoyear(start_yearweek)
+minDate <- as.Date(tsibble::make_yearweek(year = start_Y, week = start_W, week_start = 1))
+maxdate <- format(as.Date(updateDate, format = "%d/%m/%Y"), "%Y-%m-%d")
 
+AI_sts <- surveillance::sts(
+  observed = AI_weekly1,
+  start = c(as.numeric(start_Y), as.numeric(start_W)),
+  frequency = 52,
+  neighbourhood = europe_adjmat,
+  map = europeanCountries.sub
+)
 
-endWeek <-as.numeric(isoweek(end_yearweek))
-endYear <-as.numeric(isoyear(end_yearweek))
-start_yearweek <- end_yearweek-(52+13) # only go 1 1/4 year back (52+13)
-
-### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
-
-### Only data ca 1 1/4 year back from current date ###
-#subset data
-subset_start <- dim(AI_weekly)[1]-(52-endWeek)-(52+13)-52
-subset_end <- dim(AI_weekly)[1] -52 - (52-endWeek)+4
-AI_weekly1 <-  AI_weekly[subset_start:subset_end,,drop=FALSE]
-AI_wet1 <-  AI_wet[subset_start:subset_end,,drop=FALSE]
-AI_coast1 <-  AI_coast[subset_start:subset_end,,drop=FALSE]
-#area fraction of summed countries
-area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_area[subset_start:subset_end,,drop=FALSE])
-
-
-start_W <- isoweek(start_yearweek)
-start_Y <- isoyear(start_yearweek)
-
-# set min and max date of data for shiny app
-minDate <- as.Date(make_yearweek(year  = start_Y, week = start_W, 
-                                 week_start = 1))
-maxdate<- format(as.Date(updateDate, format = "%d/%m/%Y"), "%Y-%m-%d")#endDate
-
-### CONSTRUCTION OF CLASS STS USED IN hhh4 MODELS ###
-#Parameters in the sts object are created in the Data preparation script. Observed are the counts, start is start year and sample number, frequency is number of observations per year (here weekly), and neighborhood is based on adjacency calculations of spatial polygons (here europeanCountries.sub):
-AI_sts <- sts(observed = AI_weekly1, start = c(as.numeric(start_Y), as.numeric(start_W)), 
-              frequency = 52,neighbourhood = europe_adjmat, 
-              map = europeanCountries.sub)
-
-
-# these variables are created to keep track of country placement and country names in the AI_sts object. They are used for plotting predictions and simulations for individual countries
-districts2plot<-  which(colSums(observed(AI_sts), na.rm=T) > 10) 
-districts2plot1 <- countrycode(as.character(names(districts2plot)),"iso3c","country.name")
+# The app expects these original country-selection objects.
+districts2plot <- which(colSums(observed(AI_sts), na.rm = TRUE) > 10)
+districts2plot1 <- countrycode::countrycode(
+  as.character(names(districts2plot)), "iso3c", "country.name"
+)
 names(districts2plot) <- districts2plot1
-districts2plot <-districts2plot[order((names(districts2plot)))]
-districts2plot <-setNames(c(districts2plot, 0), c(names(districts2plot), "Summed all countries"))
-districts2plot2 <-names(districts2plot)
+districts2plot <- districts2plot[order(names(districts2plot))]
+districts2plot <- setNames(
+  c(districts2plot, 0),
+  c(names(districts2plot), "Summed all countries")
+)
+districts2plot2 <- names(districts2plot)
 
-#area fraction of summed countries
-area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_area[subset_start:subset_end,,drop=FALSE])
+# ----- Verify reporting-delay design -----
+Y <- observed(AI_sts)
+n_units <- ncol(Y)
+full_weeks <- which(rowSums(!is.na(Y)) == n_units)
+if (length(full_weeks) == 0L) stop("No completely observed weeks in AI_sts.")
+last_report <- max(full_weeks)
+last_reliable <- last_report - 1L
+if (last_reliable < 2L) stop("Too few observed weeks to fit the model.")
+if (anyNA(Y[seq_len(last_report), , drop = FALSE])) {
+  stop("Missing observations inside the historical/reported period; inspect data prep.")
+}
+if (last_report != last_reliable + 1L) stop("Unexpected reporting-delay indexing.")
+FORECAST <- (last_reliable + 1L):(last_reliable + 4L)
+if (max(FORECAST) > nrow(Y)) {
+  stop("Four forecast weeks do not fit in AI_sts. Check data preparation / subset_end.")
+}
+if (any(!is.na(Y[(last_report + 1L):nrow(Y), , drop = FALSE]))) {
+  stop("Expected future placeholder rows to be NA.")
+}
+FINAL_TRAIN <- 2:last_reliable
+cat("Last reported row:", last_report, "\n")
+cat("Last reliable row (fit ends):", last_reliable, "\n")
+cat("Forecast rows:", paste(FORECAST, collapse = ", "), "\n")
+cat("Country units:", n_units, "; model rows:", nrow(Y), "\n")
 
-
-################################################################################
-# FINAL ENIGMA HPAI MODEL
-# Updated November 2026
-#
-# Three annual harmonics in:
-#   1. Endemic component
-#   2. Within-country epidemic component (ar)
-#
-# Original long-distance power-law connectivity and random effects retained.
-# No bird migration or ecological connectivity modifications.
-################################################################################
-
-# Three seasonal harmonics, retaining original trend and random effects
-f_end <- addSeason2formula(
+# ----- Three annual harmonics -----
+f_end <- surveillance::addSeason2formula(
   f = ~ 1 + t + ri(type = "iid") - 1,
-  S = 3,
-  period = 52
+  S = 3, period = 52
+)
+f_ar <- surveillance::addSeason2formula(
+  f = ~ 1 + t + ri(type = "iid") - 1,
+  S = 3, period = 52
 )
 
-f_ar <- addSeason2formula(
-  f = ~ 1 + t + ri(type = "iid") - 1,
-  S = 3,
-  period = 52
-)
+# ----- Fixed power-law matrix, reproducible in every weekly update -----
+nb <- as.matrix(neighbourhood(AI_sts))
+if (!identical(dim(nb), c(n_units, n_units))) stop("Neighbourhood matrix dimensions do not match observed counts.")
+finite_orders <- nb[is.finite(nb) & nb > 0]
+if (!length(finite_orders)) stop("Neighbourhood matrix has no positive finite neighbourhood orders.")
+maxlag <- max(finite_orders)
 
-# Original model with updated seasonal components
+W_power_fixed <- surveillance::zetaweights(
+  nbmat = nb,
+  d = POWER_D,
+  maxlag = maxlag,
+  normalize = FALSE
+)
+# Explicitly exclude the own-country contribution (handled by ar).
+diag(W_power_fixed) <- 0
+rs <- rowSums(W_power_fixed)
+W_power_fixed <- sweep(W_power_fixed, 1L, ifelse(rs > 0, rs, 1), "/")
+
+if (any(!is.finite(W_power_fixed)) || any(W_power_fixed < 0) ||
+    any(diag(W_power_fixed) != 0)) {
+  stop("Invalid fixed power-law connectivity matrix.")
+}
+if (any(rs > 0 & abs(rowSums(W_power_fixed) - 1) > 1e-8)) {
+  stop("Power-law connectivity rows were not normalized.")
+}
+cat("Fixed power-law d:", POWER_D,
+    "; units without outgoing neighbourhood weights:", sum(rs == 0), "\n")
+
+# ----- Endemic offset -----
+# Keep the user's original mathematical expression, but put it in the
+# correct 'end' component. This is a substantive fix relative to the
+# previous top-level 'offset' and must be validated before deployment.
+end_offset <- area_frac * (log(AI_coast1 + 1) + log(AI_wet1 + 2))
+if (!identical(dim(end_offset), dim(Y)) ||
+    any(!is.finite(end_offset)) || any(end_offset <= 0)) {
+  stop("Endemic offset is not a finite, strictly positive time-by-country matrix.")
+}
+
+# ----- Operational model specification -----
 final_model_base <- list(
-  end = list(
-    f = f_end
-  ),
-  
-  offset = area_frac * (
-    log(AI_coast1 + 1) +
-      log(AI_wet1 + 1 + 1)
-  ),
-  
-  ar = list(
-    f = f_ar
-  ),
-  
+  end = list(f = f_end, offset = end_offset),
+  ar = list(f = f_ar),
   ne = list(
     f = ~ 1 + ri(type = "iid") - 1,
-    weights = W_powerlaw(
-      maxlag = max(neighbourhood(AI_sts)),
-      log = TRUE,
-      normalize = TRUE,
-      from0 = TRUE
-    )
+    weights = W_power_fixed
   ),
-  
   family = "NegBin1",
-  
+  subset = FINAL_TRAIN,
   optimizer = list(
     stop = list(tol = 1e-5, niter = 500),
-    regression = list(method = "nlminb"),
-    variance = list(method = "Nelder-Mead")
+    regression = list(method = "nlminb", iter.max = 200, eval.max = 400),
+    variance = list(method = "Nelder-Mead", maxit = 2000)
   ),
-  
   keep.terms = TRUE
 )
 
-# Fit model
-final_model <- hhh4(
-  stsObj = AI_sts,
-  control = final_model_base
+# ----- Fit and validate BEFORE saving -----
+cat("Fitting three-harmonic ENIGMA model...\n")
+final_model <- surveillance::hhh4(stsObj = AI_sts, control = final_model_base)
+if (!isTRUE(final_model$convergence)) {
+  stop("ENIGMA hhh4 fit did not converge. for_ai.car has NOT been overwritten.")
+}
+fixed_cf <- coef(final_model)
+if (any(!is.finite(fixed_cf))) {
+  stop("ENIGMA fit contains nonfinite coefficients. for_ai.car has NOT been overwritten.")
+}
+if (!identical(final_model$control$subset, FINAL_TRAIN)) {
+  stop("Fitted training subset does not match reporting-delay cutoff.")
+}
+if (any(grepl("neweights\\.logd", names(fixed_cf)))) {
+  stop("Decay exponent is unexpectedly estimated; expected fixed d.")
+}
+cat("Fit converged. Coefficient range:",
+    paste(signif(range(fixed_cf), 4), collapse = " to "), "\n")
+print(summary(final_model))
+
+# Confirm the model can produce a four-week forecast from the last RELIABLE week.
+# This mirrors the existing Shiny sim() reactive when its end date is the
+# latest reporting week. The app itself uses 500 simulation runs.
+cat("Checking four-step forecast simulation...\n")
+smoke <- simulate(
+  final_model,
+  nsim = N_SIM_CHECK,
+  seed = 1,
+  subset = FORECAST,
+  y.start = Y[last_reliable, ]
+)
+smoke_arr <- as.array(smoke)
+if (length(dim(smoke_arr)) != 3L ||
+    dim(smoke_arr)[1] != 4L ||
+    dim(smoke_arr)[2] != n_units ||
+    any(!is.finite(smoke_arr))) {
+  stop("Four-step forecast smoke test failed. for_ai.car has NOT been overwritten.")
+}
+cat("Simulation succeeded: ", paste(dim(smoke_arr), collapse = " x "),
+    " (forecast weeks x countries x simulations).\n", sep = "")
+rm(smoke, smoke_arr)
+
+# ----- Save exactly the objects expected by the existing Shiny app -----
+save_date <- Sys.Date()
+output_dir <- file.path(filepath, "tmp")
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+candidate_file <- file.path(output_dir, "for_ai.car")
+production_file <- file.path(filepath, "for_ai.car")
+
+bundle <- list(
+  ai_data = ai_data,
+  save_date = save_date,
+  end_yearWeek = end_yearWeek,
+  filename = filename,
+  endDate = endDate,
+  updateDate = updateDate,
+  europe_data = europe_data,
+  europe_data_weekly = europe_data_weekly,
+  AI_weekly = AI_weekly,
+  AI_weekly1 = AI_weekly1,
+  AI_wet = AI_wet,
+  AI_coast = AI_coast,
+  europe_adjmat = europe_adjmat,
+  europeanCountries.sub = europeanCountries.sub,
+  europeanCountries = europeanCountries,
+  minDate = minDate,
+  maxdate = maxdate,
+  districts2plot = districts2plot,
+  districts2plot2 = districts2plot2,
+  AI_sts = AI_sts,
+  final_model = final_model
 )
 
-# Check fitted model
-summary(final_model)
+# Never overwrite the production file until the candidate can be read back.
+qs2::qs_save(bundle, file = candidate_file, compress_level = 14L)
+verified_bundle <- qs2::qs_read(candidate_file, validate_checksum = TRUE)
+if (!is.list(verified_bundle) ||
+    !identical(sort(names(bundle)), sort(names(verified_bundle))) ||
+    !isTRUE(verified_bundle$final_model$convergence)) {
+  stop("Saved candidate failed read-back validation; production file unchanged.")
+}
+rm(verified_bundle, bundle)
 
+# Preserve the previous local .car file before replacement, if it exists.
+if (file.exists(production_file)) {
+  backup_file <- file.path(
+    output_dir,
+    paste0("for_ai_backup_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".car")
+  )
+  if (!file.copy(production_file, backup_file, overwrite = FALSE)) {
+    stop("Could not back up old for_ai.car; production file unchanged.")
+  }
+  cat("Previous .car backed up to:", backup_file, "\n")
+}
 
-
-################################################################################
-
-# Save the date:
-save_date <- Sys.Date()
-# Save the data in an (arbitrarily names file format) ".car"  format:
-# We set the wd temporarily to tmp, to save a ".car" file:
-# PIL IKKE VED DETTE!!: Det gør jeg nu alligevel - når det er mig, der opdaterer (Lene) :-)
-setwd(paste0(filepath,"tmp"))
-
-qs2::qs_save(list(ai_data=ai_data, 
-               save_date=save_date, 
-               end_yearWeek=end_yearWeek,
-               filename=filename,
-               endDate=endDate,
-               updateDate=updateDate,
-               europe_data=europe_data,
-               europe_data_weekly=europe_data_weekly,
-               AI_weekly=AI_weekly,
-               AI_weekly1=AI_weekly1,
-               AI_wet=AI_wet,
-               AI_coast=AI_coast,                
-               europe_adjmat=europe_adjmat,
-               europeanCountries.sub=europeanCountries.sub,
-               europeanCountries=europeanCountries,
-               minDate=minDate,
-               maxdate=maxdate,
-               districts2plot=districts2plot,
-               districts2plot2=districts2plot2,   
-               AI_sts=AI_sts,
-               final_model=final_model), 
-          file="for_ai.car",compress_level=14L)
-file.copy(file.path(getwd(), "for_ai.car"), paste0(filepath, "for_ai.car"), overwrite=TRUE)
-
-# Clean up:
-rm(ai_data)
-
-# Dataset used:
-filename
-
-############# 2) Push to git ###############
-
-
-
-
+if (!file.copy(candidate_file, production_file, overwrite = TRUE)) {
+  stop("Could not copy validated .car file to production location.")
+}
+cat("\nSUCCESS - validated for_ai.car saved to:\n", production_file, "\n")
+cat("WOAH data:", filename, "\n")
+cat("Training observations: rows", min(FINAL_TRAIN), "through", max(FINAL_TRAIN), "\n")
+cat("Forecast: rows", paste(FORECAST, collapse = ", "), "\n")
+cat("Fixed d:", POWER_D, "\n")
+cat("Test the Shiny app before pushing changes to GitHub.\n")

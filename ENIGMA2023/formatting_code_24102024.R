@@ -118,15 +118,77 @@ districts2plot2 <-names(districts2plot)
 #area fraction of summed countries
 area_frac <- country_area[subset_start:subset_end,,drop=FALSE]/rowSums(country_area[subset_start:subset_end,,drop=FALSE])
 
-### FINAL MODEL FROM KJÆR ET AL. 2023###
-#model with long distance transmission, random effects and seasonality in the epidemic component
-final_model_base <- list(end = list(f = ~1 + t +ri(type = "iid") - 1), offset=area_frac*(log(AI_coast1 + 1) + log(AI_wet1 + 1+1)), 
-    ar = list(f= ~ 1 +t+ ri(type = "iid") - 1), 
-                         ne = list(f = ~1 + ri(type = "iid") - 1, weights = W_powerlaw(maxlag = max(neighbourhood(AI_sts),log = TRUE,normalize = TRUE, from0 = TRUE))), 
-                         family = "NegBin1",optimizer = list(stop = list(tol=1e-5, niter=500),
-                                                             regression = list(method="nlminb"),
-                                                             variance = list(method="Nelder-Mead")),keep.terms = TRUE)
-final_model <-hhh4(stsObj = AI_sts,control = final_model_base)
+
+################################################################################
+# FINAL ENIGMA HPAI MODEL
+# Updated November 2026
+#
+# Three annual harmonics in:
+#   1. Endemic component
+#   2. Within-country epidemic component (ar)
+#
+# Original long-distance power-law connectivity and random effects retained.
+# No bird migration or ecological connectivity modifications.
+################################################################################
+
+# Three seasonal harmonics, retaining original trend and random effects
+f_end <- addSeason2formula(
+  f = ~ 1 + t + ri(type = "iid") - 1,
+  S = 3,
+  period = 52
+)
+
+f_ar <- addSeason2formula(
+  f = ~ 1 + t + ri(type = "iid") - 1,
+  S = 3,
+  period = 52
+)
+
+# Original model with updated seasonal components
+final_model_base <- list(
+  end = list(
+    f = f_end
+  ),
+  
+  offset = area_frac * (
+    log(AI_coast1 + 1) +
+      log(AI_wet1 + 1 + 1)
+  ),
+  
+  ar = list(
+    f = f_ar
+  ),
+  
+  ne = list(
+    f = ~ 1 + ri(type = "iid") - 1,
+    weights = W_powerlaw(
+      maxlag = max(neighbourhood(AI_sts)),
+      log = TRUE,
+      normalize = TRUE,
+      from0 = TRUE
+    )
+  ),
+  
+  family = "NegBin1",
+  
+  optimizer = list(
+    stop = list(tol = 1e-5, niter = 500),
+    regression = list(method = "nlminb"),
+    variance = list(method = "Nelder-Mead")
+  ),
+  
+  keep.terms = TRUE
+)
+
+# Fit model
+final_model <- hhh4(
+  stsObj = AI_sts,
+  control = final_model_base
+)
+
+# Check fitted model
+summary(final_model)
+
 
 
 ################################################################################

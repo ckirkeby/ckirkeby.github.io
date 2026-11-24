@@ -66,6 +66,18 @@ ff <- list.files(path = filepath, pattern = "^infur_[0-9]{8}\\.xlsx$", full.name
 if (length(ff) == 0L) stop("No infur_YYYYMMDD.xlsx file found in ", filepath)
 # Prefer the report date in the filename over filesystem modification time.
 filename <- ff[which.max(as.integer(sub("^infur_([0-9]{8})\\.xlsx$", "\\1", ff)))]
+
+### Chunk to avoid having to opening and saving the .xlsx file before reading into R:
+system2(
+  "powershell.exe",
+  args = c(
+    "-NoProfile",
+    "-Command",
+    shQuote(paste0("Unblock-File -LiteralPath '", filename, "'"))
+  )
+)
+### Chunk done.
+
 if (length(filename) != 1L || grepl("[()]", filename)) stop("Invalid WOAH filename.")
 sheetname <- tools::file_path_sans_ext(basename(filename))
 cat("Selected WOAH file:", filename, "\n")
